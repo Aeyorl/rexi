@@ -39,7 +39,11 @@ app.use((req, res) => {
   res.status(404).json({ error: `Route ${req.originalUrl} not found` });
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 Rexi Backend running on http://localhost:${PORT}`);
-  console.log(`📊 Health check available at http://localhost:${PORT}/api/health`);
-});
+if (process.env.VERCEL !== '1') {
+  app.listen(PORT, () => {
+    console.log(`🚀 Rexi Backend running on http://localhost:${PORT}`);
+    console.log(`📊 Health check available at http://localhost:${PORT}/api/health`);
+  });
+}
+
+export default app;
