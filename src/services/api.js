@@ -4,6 +4,17 @@
 
 const API_BASE = '/api';
 
+export async function fetchChainLaunches() {
+  try {
+    const res = await fetch(`${API_BASE}/chain/launches`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return (await res.json()).data;
+  } catch (err) {
+    console.warn('Chain launch fetch failed', err);
+    return null;
+  }
+}
+
 export async function fetchTokens({ search = '', sort = 'FDV' } = {}) {
   try {
     const params = new URLSearchParams();

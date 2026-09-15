@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useWallet } from '../context/WalletContext';
 import Sparkline from '../components/Sparkline';
 import { TOKENS } from '../data/mockData';
-import { fetchTokens } from '../services/api';
+import { fetchChainLaunches, fetchTokens } from '../services/api';
 import './Explore.css';
 
 const FILTERS = ['FDV', 'Recent', '24h volume'];
@@ -27,6 +27,7 @@ export default function Explore({ onNavigate }) {
   const [activeFilter, setActiveFilter] = useState('FDV');
   const [page, setPage] = useState(1);
   const [tokenList, setTokenList] = useState(TOKENS);
+  const [chainLaunchCount, setChainLaunchCount] = useState(null);
   const ITEMS_PER_PAGE = 12;
 
   useEffect(() => {
@@ -40,6 +41,10 @@ export default function Explore({ onNavigate }) {
     load();
     return () => { active = false; };
   }, [search, activeFilter]);
+
+  useEffect(() => {
+    fetchChainLaunches().then(data => { if (data) setChainLaunchCount(data.length); });
+  }, []);
 
   const filtered = tokenList.filter(t =>
     t.symbol.toLowerCase().includes(search.toLowerCase()) ||
@@ -104,6 +109,7 @@ export default function Explore({ onNavigate }) {
 
       {/* Token List Controls */}
       <div className="token-controls">
+        {chainLaunchCount !== null && <span className="sort-label">{chainLaunchCount} live Robinhood launches</span>}
         <div className="search-wrap">
           <svg className="search-icon" width="14" height="14" viewBox="0 0 14 14" fill="none">
             <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.5"/>
