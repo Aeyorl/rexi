@@ -131,3 +131,13 @@ contract RexiLaunchpad {
     event RewardsDistributed(address indexed token, uint256 amount, uint256 holderAmount);
     event RewardClaimed(address indexed token, address indexed holder, uint256 amount);
 }
+
+/// @notice Testnet-only reward asset. Do not use on mainnet.
+contract RexiTestStockToken is RexiToken {
+    constructor() RexiToken('Rexi Test Apple Stock Token', 'rAAPL', msg.sender, 0) {}
+
+    function mint(address to, uint256 amount) external {
+        balanceOf[to] += amount;
+        emit Transfer(address(0), to, amount);
+    }
+}
