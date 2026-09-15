@@ -2,18 +2,23 @@ import { useState } from 'react';
 import { useWallet } from '../context/WalletContext';
 import { REWARDS_STATS, TOP_DISTRIBUTIONS, RECENT_DISTRIBUTIONS } from '../data/mockData';
 import './Rewards.css';
+import { claimRewards } from '../services/rexiChain';
 
 export default function Rewards() {
   const { connected, openModal, shortAddress } = useWallet();
   const [claimed, setClaimed] = useState(false);
   const [claiming, setClaiming] = useState(false);
 
-  const handleClaim = () => {
+  const handleClaim = async () => {
     setClaiming(true);
-    setTimeout(() => {
+    try {
+      await claimRewards('0x795e81d64e7d95347a1c350ba465555df835a933');
       setClaiming(false);
       setClaimed(true);
-    }, 900);
+    } catch (error) {
+      setClaiming(false);
+      window.alert(error.message || 'Claim failed');
+    }
   };
   return (
     <div className="rewards">
