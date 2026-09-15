@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useWallet } from '../context/WalletContext';
 import { STOCK_ASSETS } from '../data/mockData';
 import { launchToken } from '../services/api';
+import { createRexiLaunch } from '../services/rexiChain';
+import { REXI_TEST_STOCK_TOKEN_TESTNET } from '../services/robinhoodChain';
 import './LaunchToken.css';
 
 const CASH_OPTIONS = ['None', '$50', '$100', '$250', '$500'];
@@ -33,13 +35,8 @@ export default function LaunchToken() {
     try {
       await new Promise(r => setTimeout(r, 600));
       setLaunchStatus('deploying');
-      await launchToken({
-        name,
-        symbol: ticker,
-        description,
-        pair: selectedPair,
-        firstBuyUsd: cashOption === 'None' ? 0 : Number(cashOption.replace('$', ''))
-      });
+      const chainLaunch = await createRexiLaunch({ name, symbol: ticker, rewardAsset: REXI_TEST_STOCK_TOKEN_TESTNET, supply: 1000000 });
+      await launchToken({ name, symbol: ticker, description, pair: selectedPair, firstBuyUsd: cashOption === 'None' ? 0 : Number(cashOption.replace('$', '')), txHash: chainLaunch.hash });
       setLaunchStatus('success');
     } catch (err) {
       setLaunchStatus(null);
