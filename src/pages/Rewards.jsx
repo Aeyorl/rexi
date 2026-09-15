@@ -12,7 +12,7 @@ export default function Rewards() {
   const handleClaim = async () => {
     setClaiming(true);
     try {
-      await claimRewards('0x795e81d64e7d95347a1c350ba465555df835a933');
+      await claimRewards('0x78da79f379be15e1f5f3020da611010cf9e7cb17');
       setClaiming(false);
       setClaimed(true);
     } catch (error) {

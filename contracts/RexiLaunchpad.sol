@@ -9,6 +9,7 @@ contract RexiToken {
     uint256 public immutable totalSupply;
     mapping(address => uint256) public balanceOf;
     mapping(address => mapping(address => uint256)) public allowance;
+    address public transferHook;
 
     constructor(string memory name_, string memory symbol_, address recipient, uint256 supply) {
         name = name_;
@@ -22,6 +23,11 @@ contract RexiToken {
         allowance[msg.sender][spender] = amount;
         emit Approval(msg.sender, spender, amount);
         return true;
+    }
+
+    function setTransferHook(address hook) external {
+        if (transferHook != address(0)) revert HookAlreadySet();
+        transferHook = hook;
     }
 
     function transfer(address to, uint256 amount) external returns (bool) {
@@ -38,6 +44,7 @@ contract RexiToken {
     }
 
     function _transfer(address from, address to, uint256 amount) internal {
+        if (transferHook != address(0)) ITransferHook(transferHook).beforeTokenTransfer(address(this), from, to);
         if (balanceOf[from] < amount) revert InsufficientBalance();
         balanceOf[from] -= amount;
         balanceOf[to] += amount;
@@ -46,12 +53,15 @@ contract RexiToken {
 
     error InsufficientBalance();
     error InsufficientAllowance();
+    error HookAlreadySet();
     event Transfer(address indexed from, address indexed to, uint256 amount);
     event Approval(address indexed owner, address indexed spender, uint256 amount);
 }
 
+interface ITransferHook { function beforeTokenTransfer(address token, address from, address to) external; }
+
 /// @notice Testnet launchpad: reward-token deposits are claimable pro-rata by launch-token holders.
-contract RexiLaunchpad {
+contract RexiLaunchpad is ITransferHook {
     uint256 public constant BPS = 10_000;
     uint256 public constant HOLDER_SHARE = 6_750;
     uint256 public constant ACC_SCALE = 1e24;
@@ -83,6 +93,7 @@ contract RexiLaunchpad {
         if (rewardAsset == address(0) || supply == 0) revert InvalidLaunch();
         token = address(new RexiToken(name, symbol, msg.sender, supply));
         launches[token] = Launch(token, rewardAsset, 0, 0, true);
+        RexiToken(token).setTransferHook(address(this));
         emit LaunchCreated(token, rewardAsset, msg.sender, supply);
     }
 
@@ -110,6 +121,18 @@ contract RexiLaunchpad {
         launch.rewardBalance -= amount;
         _pay(launch.rewardAsset, msg.sender, amount);
         emit RewardClaimed(token, msg.sender, amount);
+    }
+
+    function beforeTokenTransfer(address token, address from, address to) external override {
+        if (msg.sender != token || from == address(0) || to == address(0)) return;
+        Launch storage launch = launches[token];
+        _settle(token, from, launch);
+        _settle(token, to, launch);
+    }
+
+    function _settle(address token, address holder, Launch storage launch) internal {
+        uint256 accrued = RexiToken(token).balanceOf(holder) * launch.accRewardPerToken / ACC_SCALE;
+        if (accrued > rewardDebt[token][holder]) rewardDebt[token][holder] = accrued;
     }
 
     function _pull(address asset, address from, uint256 amount) internal {

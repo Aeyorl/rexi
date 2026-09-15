@@ -7,7 +7,7 @@ export const ROBINHOOD_CHAIN_TESTNET = {
   blockExplorerUrls: ['https://explorer.testnet.chain.robinhood.com']
 };
 
-export const REXI_LAUNCHPAD_TESTNET = '0xfd9FD9Ba704e5395D591b0d36CF682061e318F90';
+export const REXI_LAUNCHPAD_TESTNET = '0x22F4fdfF29411E7E0a136A2d3802Dd96a3B52cC0';
 export const REXI_TEST_STOCK_TOKEN_TESTNET = '0x741Dd50A3D166589e870615c9B2D482DA800a0C3';
 
 export async function connectRobinhoodChain() {
