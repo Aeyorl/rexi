@@ -2,12 +2,32 @@ import { useState } from 'react';
 import { useWallet } from '../context/WalletContext';
 import { REWARDS_STATS, TOP_DISTRIBUTIONS, RECENT_DISTRIBUTIONS } from '../data/mockData';
 import './Rewards.css';
-import { claimRewards } from '../services/rexiChain';
+import { approveRewards, claimRewards, distributeRewards } from '../services/rexiChain';
+import { REXI_LAUNCHPAD_TESTNET, REXI_TEST_STOCK_TOKEN_TESTNET } from '../services/robinhoodChain';
+
+const TEST_LAUNCH_TOKEN = '0x78da79f379be15e1f5f3020da611010cf9e7cb17';
 
 export default function Rewards() {
   const { connected, openModal, shortAddress } = useWallet();
   const [claimed, setClaimed] = useState(false);
   const [claiming, setClaiming] = useState(false);
+  const [funding, setFunding] = useState(false);
+  const [fundingMessage, setFundingMessage] = useState('');
+
+  const handleFundRewards = async () => {
+    setFunding(true);
+    setFundingMessage('Approving rAAPL…');
+    try {
+      await approveRewards(1000);
+      setFundingMessage('Distributing 1,000 rAAPL…');
+      await distributeRewards(TEST_LAUNCH_TOKEN, 1000);
+      setFundingMessage('1,000 rAAPL distributed successfully.');
+    } catch (error) {
+      setFundingMessage(error.message || 'Reward funding failed');
+    } finally {
+      setFunding(false);
+    }
+  };
 
   const handleClaim = async () => {
     setClaiming(true);
@@ -28,6 +48,22 @@ export default function Rewards() {
           Every coin launched here pays its holders. Fees are claimed from pump and the holders' share goes out pro-rata. Most coins pay in a reward stock the launcher picked. Some are launched paired against another asset, a token or a tokenised stock, and those pay in whatever they trade against.
         </p>
       </div>
+
+      {connected && (
+        <div className="user-rewards-card animate-in">
+          <div className="user-rewards-active">
+            <div className="user-rewards-left">
+              <div className="user-pill-tag"><span className="active-dot" /> Testnet reward controls</div>
+              <div className="claimable-sub">Fund the current Rexi launch with rAAPL on Robinhood Chain Testnet.</div>
+              {fundingMessage && <div className="claimable-sub">{fundingMessage}</div>}
+              <code>{REXI_TEST_STOCK_TOKEN_TESTNET} → {REXI_LAUNCHPAD_TESTNET}</code>
+            </div>
+            <button className="btn-claim-rewards" disabled={funding} onClick={handleFundRewards}>
+              {funding ? 'Processing…' : 'Approve + distribute 1,000 rAAPL'}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* User Connected Rewards Card */}
       <div className="user-rewards-card animate-in">
