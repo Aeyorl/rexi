@@ -5,6 +5,7 @@ import robinhoodRouter from './routes/robinhood.mjs';
 import stocksRouter from './routes/stocks.mjs';
 import desksRouter from './routes/desks.mjs';
 import analyticsRouter from './routes/analytics.mjs';
+import chainRouter from './routes/chain.mjs';
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -31,6 +32,7 @@ app.use('/api/robinhood', robinhoodRouter);
 app.use('/api/stocks', stocksRouter);
 app.use('/api/desks', desksRouter);
 app.use('/api/analytics', analyticsRouter);
+app.use('/api/chain', chainRouter);
 
 // 404 Handler
 app.use((req, res) => {
