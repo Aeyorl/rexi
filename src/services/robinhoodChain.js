@@ -7,6 +7,8 @@ export const ROBINHOOD_CHAIN_TESTNET = {
   blockExplorerUrls: ['https://explorer.testnet.chain.robinhood.com']
 };
 
+export const REXI_LAUNCHPAD_TESTNET = '0xfd9FD9Ba704e5395D591b0d36CF682061e318F90';
+
 export async function connectRobinhoodChain() {
   if (!window.ethereum) throw new Error('Install an EVM wallet such as Robinhood Wallet to continue.');
   const [address] = await window.ethereum.request({ method: 'eth_requestAccounts' });
