@@ -1,46 +1,17 @@
 import { useState, useEffect } from 'react';
-import { useWallet } from '../context/WalletContext';
-import Sparkline from '../components/Sparkline';
-import { TOKENS } from '../data/mockData';
-import { fetchChainIndex, fetchTokens } from '../services/api';
+import { fetchChainIndex } from '../services/api';
 import './Explore.css';
 
-const FILTERS = ['FDV', 'Recent', '24h volume'];
+// Real, on-chain-backed sorts the launchpad data actually supports.
+const FILTERS = ['Recent', 'Distributed', 'Claims'];
 
-// Mini chart for the hero $OTC price line
-function MiniOTCChart() {
-  const pts = [62,58,61,55,52,57,60,56,53,58,61,57,54,60,63,59,55,57,61,58,56,60,57,53,55,58,56,54,57,55];
-  const w = 140, h = 36;
-  const min = Math.min(...pts), max = Math.max(...pts);
-  const range = max - min || 1;
-  const points = pts.map((v, i) => `${(i/(pts.length-1))*w},${h - ((v-min)/range)*h*0.85 - h*0.075}`).join(' ');
-  return (
-    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} style={{ overflow: 'visible' }}>
-      <polyline points={points} fill="none" stroke="#4ec994" strokeWidth="1.5" strokeLinejoin="round" />
-    </svg>
-  );
-}
 
 export default function Explore({ onNavigate }) {
-  const { openTradeModal } = useWallet();
   const [search, setSearch] = useState('');
-  const [activeFilter, setActiveFilter] = useState('FDV');
+  const [activeFilter, setActiveFilter] = useState('Recent');
   const [page, setPage] = useState(1);
-  const [tokenList, setTokenList] = useState(TOKENS);
   const [chainIndex, setChainIndex] = useState(null);
   const ITEMS_PER_PAGE = 12;
-
-  useEffect(() => {
-    let active = true;
-    async function load() {
-      const data = await fetchTokens({ search, sort: activeFilter });
-      if (active && data && data.length > 0) {
-        setTokenList(data);
-      }
-    }
-    load();
-    return () => { active = false; };
-  }, [search, activeFilter]);
 
   useEffect(() => {
     let active = true;
@@ -55,13 +26,23 @@ export default function Explore({ onNavigate }) {
   const chainLaunches = chainIndex?.data ?? [];
   const chainStats = chainIndex?.stats ?? null;
 
-  const filtered = tokenList.filter(t =>
-    t.symbol.toLowerCase().includes(search.toLowerCase()) ||
-    t.name.toLowerCase().includes(search.toLowerCase())
+  const query = search.toLowerCase().trim();
+  const filteredChain = chainLaunches.filter(l =>
+    !query
+    || (l.symbol || '').toLowerCase().includes(query)
+    || (l.name || '').toLowerCase().includes(query)
+    || (l.token || '').toLowerCase().includes(query)
   );
 
-  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
-  const paged = filtered.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
+  const sortedChain = [...filteredChain].sort((a, b) => {
+    if (activeFilter === 'Distributed') return Number(b.distributedRaw) - Number(a.distributedRaw);
+    if (activeFilter === 'Claims') return (b.claimCount || 0) - (a.claimCount || 0);
+    return Number(b.blockNumber ?? 0) - Number(a.blockNumber ?? 0);
+  });
+
+  const totalPages = Math.max(1, Math.ceil(sortedChain.length / ITEMS_PER_PAGE));
+  const safePage = Math.min(page, totalPages);
+  const pagedChain = sortedChain.slice((safePage - 1) * ITEMS_PER_PAGE, safePage * ITEMS_PER_PAGE);
 
   return (
     <div className="explore">
@@ -73,17 +54,9 @@ export default function Explore({ onNavigate }) {
             <button className="btn-primary" onClick={() => onNavigate('Launch token')}>
               <span className="plus">+</span> Launch a token
             </button>
-            <button
-              className="btn-rh-hero"
-              onClick={() => openTradeModal({ symbol: 'AAPLx', name: 'Apple Inc. Tokenized', price: 228.40 })}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                <path d="M19.4 3C19.4 3 14.8 4.2 11.2 7.8C7.6 11.4 6 16.5 6 16.5L9.5 15.5L8 18.5L12 17.5L10.5 20.5C10.5 20.5 15.5 19 19 15.5C22.5 12 23.5 7.5 23.5 7.5L20 8.5L21.5 5.5L17.5 6.5L19.4 3Z" fill="#00c805"/>
-                <path d="M5.5 18C4 19.5 2 22 2 22C2 22 4.5 20 6 18.5L5.5 18Z" fill="#00c805"/>
-              </svg>
-              Trade Stocks via Robinhood
+            <button className="btn-ghost" onClick={() => onNavigate('Rewards')}>
+              How it works →
             </button>
-            <button className="btn-ghost">How it works →</button>
           </div>
           <div className="hero-stats">
             <div className="hero-stat">
@@ -102,21 +75,21 @@ export default function Explore({ onNavigate }) {
         </div>
         <div className="hero-right">
           <div className="hero-price-ticker">
-            <span className="ticker-label">$OTC</span>
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ opacity: 0.5 }}>
-              <circle cx="7" cy="7" r="6" stroke="currentColor" strokeWidth="1.2"/>
-              <path d="M7 4v3l2 2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-            </svg>
+            <span className="ticker-label">On testnet</span>
           </div>
-          <div className="hero-price">$3.69M</div>
-          <div className="hero-change positive">+13.9% <span>24h</span></div>
+          <div className="hero-price">{chainStats ? `${chainStats.launchCount} launches` : '—'}</div>
+          <div className="hero-change positive">
+            {chainStats ? `${chainStats.legacyLaunchCount} legacy` : 'Reading chain…'}
+          </div>
           <div className="hero-chart">
-            <MiniOTCChart />
+            <div className="hero-chain-note">
+              {chainIndex?.launchpad ? `${chainIndex.launchpad.slice(0, 8)}…${chainIndex.launchpad.slice(-6)}` : ''}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Live Robinhood Chain launches (real, indexed from the launchpad) */}
+      {/* Live on the chain index: launches from every indexed deployment */}
       <div className="chain-launches">
         <div className="section-header">
           <h2>Live on Robinhood Chain Testnet</h2>
@@ -124,6 +97,7 @@ export default function Explore({ onNavigate }) {
             {chainIndex?.launchpad
               ? `launchpad ${chainIndex.launchpad.slice(0, 6)}…${chainIndex.launchpad.slice(-4)}`
               : 'indexing…'}
+            {chainStats?.legacyLaunchCount > 0 ? ` · +${chainStats.legacyLaunchCount} legacy` : ''}
           </span>
         </div>
         {chainLaunches.length === 0 ? (
@@ -178,7 +152,9 @@ export default function Explore({ onNavigate }) {
 
       {/* Token List Controls */}
       <div className="token-controls">
-        {chainStats && <span className="sort-label">{chainStats.launchCount} live Robinhood launches</span>}
+        <span className="sort-label">
+          {chainStats ? `${filteredChain.length} live Robinhood launch${filteredChain.length === 1 ? '' : 'es'}` : 'Reading Robinhood Chain…'}
+        </span>
         <div className="search-wrap">
           <svg className="search-icon" width="14" height="14" viewBox="0 0 14 14" fill="none">
             <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.5"/>
@@ -186,7 +162,7 @@ export default function Explore({ onNavigate }) {
           </svg>
           <input
             className="search-input"
-            placeholder="Search"
+            placeholder="Search by symbol, name or address"
             value={search}
             onChange={e => { setSearch(e.target.value); setPage(1); }}
           />
@@ -197,63 +173,45 @@ export default function Explore({ onNavigate }) {
             <button
               key={f}
               className={`filter-btn ${activeFilter === f ? 'active' : ''}`}
-              onClick={() => setActiveFilter(f)}
+              onClick={() => { setActiveFilter(f); setPage(1); }}
             >
               {f}
             </button>
           ))}
-          <button className="filter-btn spl">⬛ SPL-404</button>
-          <button className="filter-btn">Filter ▾</button>
         </div>
       </div>
 
-      {/* Token Grid */}
+      {/* Real launches as the browse grid, searchable and sortable */}
       <div className="token-grid">
-        {paged.map(token => (
-          <div key={token.id} className="token-card animate-in">
+        {filteredChain.length === 0 && (
+          <div className="chain-empty">
+            {chainIndex ? 'No launches match. Launch the first one.' : 'Reading the launchpad…'}
+          </div>
+        )}
+        {pagedChain.map(launch => (
+          <a key={launch.token} className="token-card animate-in" href={launch.tokenUrl} target="_blank" rel="noreferrer">
             <div className="token-card-header">
               <div className="token-avatar">
-                <span className="token-avatar-text">{token.symbol.slice(1, 3).toUpperCase()}</span>
+                <span className="token-avatar-text">{(launch.symbol || '??').slice(0, 2).toUpperCase()}</span>
               </div>
               <div className="token-meta">
                 <div className="token-symbol-row">
-                  <span className="token-symbol">{token.symbol}</span>
-                  <span className="token-badge">{token.badge}</span>
-                  {token.extraBadge && <span className="token-badge extra">{token.extraBadge}</span>}
+                  <span className="token-symbol">${launch.symbol || 'unknown'}</span>
+                  <span className="token-badge">{launch.active ? 'live' : 'closed'}</span>
+                  {launch.legacy && <span className="token-badge extra">legacy</span>}
                 </div>
-                <span className="token-name">{token.name}</span>
+                <span className="token-name">{launch.name || 'Unnamed launch'}</span>
               </div>
-              <button className="token-copy" title="Copy address">
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                  <rect x="4" y="4" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="1.2" fill="none"/>
-                  <path d="M1 8V1h7" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-                </svg>
-              </button>
             </div>
-            <div className="token-fdv">{token.fdv}</div>
+            <div className="token-fdv">{launch.supplyFormatted ?? '—'} ${launch.symbol || ''} supply</div>
             <div className="token-pays">
               <span className="pays-label">Pays</span>
-              <span className="pays-icon">{token.paysIcon}</span>
-              <span className="pays-name">{token.pays}</span>
-              <button
-                className="btn-card-rh-trade"
-                title={`Trade ${token.pays} on Robinhood`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  openTradeModal({
-                    symbol: token.pays || 'AAPLx',
-                    name: `${token.pays} Stock Dividend Token`,
-                    price: token.pays === 'TSLAx' ? 214.20 : token.pays === 'NVDAx' ? 128.50 : 228.40
-                  });
-                }}
-              >
-                Trade {token.pays}
-              </button>
+              <span className="pays-name">{launch.rewardAssetSymbol || 'reward asset'}</span>
+              <span className="pays-meta">
+                {(launch.distributed || '0')} distributed · {(launch.claimed || '0')} claimed
+              </span>
             </div>
-            <div className="token-sparkline">
-              <Sparkline trend={token.trend} width={280} height={44} />
-            </div>
-          </div>
+          </a>
         ))}
       </div>
 
@@ -262,21 +220,21 @@ export default function Explore({ onNavigate }) {
         <div className="pagination">
           <button
             className="page-btn"
-            disabled={page === 1}
-            onClick={() => setPage(p => p - 1)}
+            disabled={safePage === 1}
+            onClick={() => setPage(p => Math.max(1, p - 1))}
           >‹ Previous</button>
           {Array.from({ length: Math.min(totalPages, 3) }, (_, i) => i + 1).map(p => (
             <button
               key={p}
-              className={`page-btn num ${page === p ? 'active' : ''}`}
+              className={`page-btn num ${safePage === p ? 'active' : ''}`}
               onClick={() => setPage(p)}
             >{p}</button>
           ))}
           {totalPages > 3 && <span className="page-ellipsis">...</span>}
           <button
             className="page-btn"
-            disabled={page === totalPages}
-            onClick={() => setPage(p => p + 1)}
+            disabled={safePage === totalPages}
+            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
           >Next ›</button>
         </div>
       )}

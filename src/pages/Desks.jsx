@@ -1,94 +1,78 @@
-import { useState } from 'react';
-import { useWallet } from '../context/WalletContext';
-import { DESKS } from '../data/mockData';
+// Desks as they actually work: the desks treasury is paid 10% of every real
+// distribution, so this page lists the live treasury balance and the desk
+// share of each distribution, newest first. There is no desk NFT/mint program
+// in the contracts, so this page shows payouts only.
+import { useEffect, useState } from 'react';
+import { fetchChainActivity } from '../services/api';
 import './Desks.css';
 
-const DESK_TABS = ['All', 'Yours', 'Burns'];
-
 export default function Desks() {
-  const { connected, openModal } = useWallet();
-  const [activeTab, setActiveTab] = useState('All');
-  const [page, setPage] = useState(1);
-  const PER_PAGE = 10;
+  const [activity, setActivity] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const yourDesks = [
-    { id: 418, name: 'OTC Desk #418', earned: '1,420.50' },
-    { id: 1042, name: 'OTC Desk #1042', earned: '840.12' }
-  ];
+  useEffect(() => {
+    let active = true;
+    async function load() {
+      const data = await fetchChainActivity();
+      if (!active) return;
+      if (data) setActivity(data);
+      setLoading(false);
+    }
+    load();
+    return () => { active = false; };
+  }, []);
 
-  const currentList = activeTab === 'Yours' 
-    ? (connected ? yourDesks : [])
-    : DESKS;
-
-  const totalPages = Math.max(1, Math.ceil(currentList.length / PER_PAGE));
-  const paged = currentList.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+  const symbol = activity?.totals?.assets?.[0]?.symbol || 'reward';
+  const desksTreasuries = (activity?.treasuries ?? []).filter(t => t.role === 'desks' && !t.legacy);
+  const distributions = activity?.distributions ?? [];
 
   return (
     <div className="desks-page">
-      {/* Status bar */}
+      {/* Status bar with real on-chain numbers */}
       <div className="desks-status-bar">
         <div className="status-item">
           <span className="status-dot live"></span>
           <div>
-            <div className="status-label">MINTED</div>
-            <div className="status-val accent">2,245 / 5000</div>
+            <div className="status-label">DESKS SHARE</div>
+            <div className="status-val accent">10% of every distribution</div>
           </div>
         </div>
         <div className="status-item">
-          <div className="status-label">LIVE DESKS</div>
-          <div className="status-val">2,245</div>
+          <div className="status-label">EARNED, ALL TIME</div>
+          <div className="status-val">{activity ? `${Number(activity.totals.desks).toLocaleString('en-US')} ${symbol}` : '—'}</div>
         </div>
         <div className="status-item">
-          <div className="status-label">OTC BURNED</div>
-          <div className="status-val accent">248,800,000</div>
-        </div>
-        <div className="status-item">
-          <div className="status-label">BUYS NEXT</div>
-          <div className="status-val">
-            <span className="neuralink-dot">🧠</span> NEURALINK
+          <div className="status-label">TREASURY BALANCE</div>
+          <div className="status-val green">
+            {desksTreasuries.length > 0
+              ? desksTreasuries.flatMap(t => t.balances).map(b => `${Number(b.formatted).toLocaleString('en-US')} ${b.symbol}`).join(' · ')
+              : '—'}
           </div>
         </div>
         <div className="status-item">
-          <div className="status-label">PAID TO HOLDERS</div>
-          <div className="status-val green">$466,989.38</div>
+          <div className="status-label">DISTRIBUTIONS</div>
+          <div className="status-val">{activity ? activity.totals.distributions : '—'}</div>
         </div>
       </div>
 
-      {/* Desks List */}
+      {/* Desk share of each distribution */}
       <div className="desks-card">
-        {/* Tabs */}
         <div className="desks-tabs">
-          {DESK_TABS.map(tab => (
-            <button
-              key={tab}
-              className={`desks-tab ${activeTab === tab ? 'active' : ''}`}
-              onClick={() => setActiveTab(tab)}
-            >
-              {tab} {tab === 'All' ? '2245' : tab === 'Burns' ? '2245' : ''}
-            </button>
-          ))}
-          <button className="desks-history-btn">
-            <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-              <circle cx="6.5" cy="6.5" r="5.5" stroke="currentColor" strokeWidth="1.2"/>
-              <path d="M6.5 3.5V6.5l2 2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-            </svg>
-            History
-          </button>
+          <span className="desks-tab active">Desk payouts</span>
+          <span className="desks-tab-sub">{loading ? 'Reading chain…' : `${distributions.length} events`}</span>
         </div>
 
-        {/* List */}
-        {activeTab === 'Yours' && !connected ? (
-          <div className="desks-connect-prompt">
-            <div className="prompt-inner">
-              <span className="prompt-icon">🔐</span>
-              <h3>Connect your wallet</h3>
-              <p>Connect Robinhood to view your Rexi desks and claim revenue rewards.</p>
-              <button className="btn-connect-desks" onClick={openModal}>Connect Wallet</button>
-            </div>
-          </div>
-        ) : paged.map((desk, i) => (
-          <div key={desk.id} className="desk-row animate-in">
-            <div className="desk-num">{(page - 1) * PER_PAGE + i + 1}</div>
+        {distributions.length === 0 && (
+          <div className="chart-empty">{loading ? 'Reading chain…' : 'No distributions yet.'}</div>
+        )}
+        {distributions.map(item => (
+          <a
+            key={item.txHash}
+            className="desk-row animate-in"
+            href={item.txUrl}
+            target="_blank"
+            rel="noreferrer"
+          >
             <div className="desk-nft">
               <div className="desk-nft-img">
                 <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
@@ -101,29 +85,17 @@ export default function Desks() {
               </div>
             </div>
             <div className="desk-info">
-              <div className="desk-name">{desk.name}</div>
+              <div className="desk-name">{item.name || item.symbol} · {item.ago}</div>
               <div className="desk-dots">
-                {Array.from({ length: 20 }, (_, j) => (
-                  <span key={j} className={`desk-dot ${j < Math.floor(desk.id / 100) ? 'filled' : ''}`} />
-                ))}
+                {item.legacy ? 'legacy launchpad' : 'current launchpad'}
               </div>
             </div>
             <div className="desk-earned">
-              <div className="desk-earned-val">${desk.earned}</div>
+              <div className="desk-earned-val">{Number(item.desks).toLocaleString('en-US')} {item.rewardAssetSymbol}</div>
               <div className="desk-earned-label">EARNED</div>
             </div>
-          </div>
+          </a>
         ))}
-
-        {/* Pagination */}
-        <div className="desks-pagination">
-          <button className="page-btn" disabled={page === 1} onClick={() => setPage(p => p - 1)}>‹ Previous</button>
-          {[1, 2, 3].map(p => (
-            <button key={p} className={`page-btn num ${page === p ? 'active' : ''}`} onClick={() => setPage(p)}>{p}</button>
-          ))}
-          <span className="page-ellipsis">...</span>
-          <button className="page-btn" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}>Next ›</button>
-        </div>
       </div>
     </div>
   );

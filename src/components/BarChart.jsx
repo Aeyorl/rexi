@@ -1,10 +1,10 @@
-import { useMemo } from 'react';
-import { generateBarData } from '../data/mockData';
+// Bar chart over real values supplied by the caller (e.g. distributed reward
+// totals per day from the chain index). Renders nothing when empty.
+export default function BarChart({ values = [], width = 700, height = 160, color = '#8fb339' }) {
+  const data = values.map(v => Number(v) || 0);
+  if (data.length === 0) return null;
 
-export default function BarChart({ width = 700, height = 160, color = '#8fb339' }) {
-  const data = useMemo(() => generateBarData(30), []);
-  
-  const max = Math.max(...data);
+  const max = Math.max(...data, 1);
   const barWidth = width / data.length;
   const gap = 2;
 

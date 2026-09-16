@@ -34,6 +34,9 @@ const symbolAbi = parseAbiItem('function symbol() view returns (string)');
 const decimalsAbi = parseAbiItem('function decimals() view returns (uint8)');
 const totalSupplyAbi = parseAbiItem('function totalSupply() view returns (uint256)');
 const balanceOfAbi = parseAbiItem('function balanceOf(address account) view returns (uint256)');
+const protocolTreasuryAbi = parseAbiItem('function protocolTreasury() view returns (address)');
+const desksTreasuryAbi = parseAbiItem('function desksTreasury() view returns (address)');
+const buybackTreasuryAbi = parseAbiItem('function buybackTreasury() view returns (address)');
 
 const CACHE_TTL_MS = 15000;
 const indexCache = new Map();
@@ -338,6 +341,163 @@ async function buildHealth() {
   };
 }
 
+/** The fee split the contracts apply, derived from a distribution's received amount. */
+function splitOf(amount) {
+  const holders = (amount * 6750n) / 10000n;
+  const protocol = (amount * 500n) / 10000n;
+  const desks = (amount * 1000n) / 10000n;
+  const buybacks = (amount * 1000n) / 10000n;
+  return { holders, protocol, desks, buybacks, platformOps: amount - holders - protocol - desks - buybacks };
+}
+
+/** Reads the three treasury addresses straight from a launchpad, plus their balances. */
+async function readTreasuries(launchpadAddress, assets, legacy) {
+  const roles = [
+    { role: 'protocol', functionName: 'protocolTreasury', abi: protocolTreasuryAbi },
+    { role: 'desks', functionName: 'desksTreasury', abi: desksTreasuryAbi },
+    { role: 'buyback', functionName: 'buybackTreasury', abi: buybackTreasuryAbi }
+  ];
+  const entries = await Promise.all(roles.map(async ({ role, functionName, abi }) => {
+    const address = await client
+      .readContract({ address: launchpadAddress, abi: [abi], functionName })
+      .catch(() => null);
+    if (!address) return null;
+    const balances = await Promise.all(assets.map(async (asset) => {
+      const raw = await client
+        .readContract({ address: asset, abi: [balanceOfAbi], functionName: 'balanceOf', args: [address] })
+        .catch(() => null);
+      return {
+        asset,
+        symbol: rewardAssetByAddress(asset)?.symbol ?? null,
+        raw: raw?.toString() ?? null,
+        formatted: raw != null ? formatReward(raw, asset) : null
+      };
+    }));
+    return { launchpad: launchpadAddress, legacy, role, address, addressUrl: explorerAddressUrl(address), balances };
+  }));
+  return entries.filter(Boolean);
+}
+
+/**
+ * Everything the finance pages show, derived from real events and live state:
+ * per-distribution fee splits, cumulative totals per asset, daily buckets and
+ * the treasury balances actually held on-chain.
+ */
+async function buildActivity() {
+  const indexes = await Promise.all(launchpads.map(pad => cachedIndexFor(pad)));
+  const rows = [];
+  const assets = new Set();
+
+  for (const index of indexes) {
+    for (const log of index.distributedLogs) {
+      const launch = index.launches.find(l => l.token === log.args.token);
+      if (!launch) continue;
+      assets.add(launch.rewardAsset);
+      rows.push({
+        token: launch.token,
+        symbol: launch.symbol,
+        name: launch.name,
+        launchpad: index.launchpad,
+        legacy: index.legacy,
+        rewardAsset: launch.rewardAsset,
+        rewardAssetSymbol: launch.rewardAssetSymbol,
+        amount: log.args.amount,
+        splits: splitOf(log.args.amount),
+        txHash: log.transactionHash,
+        blockNumber: log.blockNumber
+      });
+    }
+  }
+  rows.sort((a, b) => Number(b.blockNumber ?? 0) - Number(a.blockNumber ?? 0));
+  const stamps = await timestampsFor(rows);
+  const assetList = [...assets];
+
+  const zero = () => ({ distributed: 0n, holders: 0n, protocol: 0n, desks: 0n, buybacks: 0n, platformOps: 0n, count: 0 });
+  const totals = zero();
+  const perAsset = new Map();
+  const perDay = new Map();
+
+  const bump = (entry, amount, splits) => {
+    entry.distributed += amount;
+    entry.holders += splits.holders;
+    entry.protocol += splits.protocol;
+    entry.desks += splits.desks;
+    entry.buybacks += splits.buybacks;
+    entry.platformOps += splits.platformOps;
+    entry.count += 1;
+  };
+
+  const distributions = rows.map((row) => {
+    const stamp = stamps[row.blockNumber?.toString()];
+    const day = stamp ? new Date(stamp * 1000).toISOString().slice(0, 10) : null;
+    bump(totals, row.amount, row.splits);
+    const assetEntry = perAsset.get(row.rewardAsset) || { ...zero(), asset: row.rewardAsset, symbol: row.rewardAssetSymbol };
+    bump(assetEntry, row.amount, row.splits);
+    perAsset.set(row.rewardAsset, assetEntry);
+    if (day) {
+      const dayEntry = perDay.get(day) || { ...zero(), day };
+      bump(dayEntry, row.amount, row.splits);
+      perDay.set(day, dayEntry);
+    }
+    return {
+      token: row.token,
+      symbol: row.symbol,
+      name: row.name,
+      launchpad: row.launchpad,
+      legacy: row.legacy,
+      amount: formatReward(row.amount, row.rewardAsset),
+      holders: formatReward(row.splits.holders, row.rewardAsset),
+      protocol: formatReward(row.splits.protocol, row.rewardAsset),
+      desks: formatReward(row.splits.desks, row.rewardAsset),
+      buybacks: formatReward(row.splits.buybacks, row.rewardAsset),
+      platformOps: formatReward(row.splits.platformOps, row.rewardAsset),
+      rewardAssetSymbol: row.rewardAssetSymbol,
+      txHash: row.txHash,
+      txUrl: explorerTxUrl(row.txHash),
+      blockNumber: row.blockNumber?.toString() ?? null,
+      timestamp: stamp ?? null,
+      ago: relativeTime(stamp)
+    };
+  });
+
+  const asMoney = (entry, asset) => ({
+    distributed: formatReward(entry.distributed, asset),
+    holders: formatReward(entry.holders, asset),
+    protocol: formatReward(entry.protocol, asset),
+    desks: formatReward(entry.desks, asset),
+    buybacks: formatReward(entry.buybacks, asset),
+    platformOps: formatReward(entry.platformOps, asset),
+    count: entry.count
+  });
+
+  const asset = assetList[0] || null;
+  const treasuries = (await Promise.all(launchpads.map((pad, i) =>
+    readTreasuries(pad, assetList, indexes[i].legacy)
+  ))).flat();
+
+  const byDay = [...perDay.values()]
+    .sort((a, b) => (a.day < b.day ? -1 : 1))
+    .map((entry) => ({
+      ...asMoney(entry, asset),
+      day: entry.day,
+      fees: formatReward(entry.protocol + entry.desks + entry.buybacks + entry.platformOps, asset)
+    }));
+
+  return {
+    success: true,
+    chainId: REXI_NETWORK.chainIdDecimal,
+    launchpads,
+    explorer: REXI_NETWORK.blockExplorerUrl,
+    generatedAt: new Date().toISOString(),
+    totals: { ...asMoney(totals, asset), distributions: totals.count },
+    byAsset: [...perAsset.values()].map(entry => ({ asset: entry.asset, symbol: entry.symbol, ...asMoney(entry, entry.asset) })),
+    treasuries,
+    byDay,
+    distributions
+  };
+}
+
+
 router.get('/launches', async (_req, res) => {
   try {
     res.json(await mergedIndex());
@@ -371,6 +531,14 @@ router.get('/health', async (_req, res) => {
   try {
     const health = await buildHealth();
     res.status(health.status === 'ok' ? 200 : 503).json(health);
+  } catch (error) {
+    res.status(502).json({ success: false, error: 'Robinhood Chain RPC unavailable', detail: error.message });
+  }
+});
+
+router.get('/activity', async (_req, res) => {
+  try {
+    res.json(await buildActivity());
   } catch (error) {
     res.status(502).json({ success: false, error: 'Robinhood Chain RPC unavailable', detail: error.message });
   }

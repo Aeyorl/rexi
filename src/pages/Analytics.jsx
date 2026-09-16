@@ -1,41 +1,41 @@
-import { useState } from 'react';
-import { ANALYTICS_STATS } from '../data/mockData';
+// Analytics over real on-chain distributions: totals, the daily series of
+// what holders earned and what fees each distribution paid, and the full
+// distribution history with explorer links. Nothing here is sampled.
+import { useEffect, useState } from 'react';
+import { fetchChainActivity } from '../services/api';
 import BarChart from '../components/BarChart';
 import './Analytics.css';
 
-const SUBTABS = ['Launchpad', 'Buybacks', 'Desks'];
-const TIME_FILTERS = ['24 hours', 'All time'];
-
 export default function Analytics() {
-  const [subTab, setSubTab] = useState('Launchpad');
-  const [timeFilter, setTimeFilter] = useState('All time');
+  const [activity, setActivity] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    async function load() {
+      const data = await fetchChainActivity();
+      if (!active) return;
+      if (data) setActivity(data);
+      setLoading(false);
+    }
+    load();
+    return () => { active = false; };
+  }, []);
+
+  const asset = activity?.totals?.assets?.[0];
+  const symbol = asset?.symbol || 'reward';
+  const days = activity?.byDay ?? [];
+  const distributions = activity?.distributions ?? [];
 
   return (
     <div className="analytics">
-      {/* Sub tabs + time filter */}
       <div className="analytics-controls">
-        <div className="subtab-group">
-          {SUBTABS.map(t => (
-            <button
-              key={t}
-              className={`subtab-btn ${subTab === t ? 'active' : ''}`}
-              onClick={() => setSubTab(t)}
-            >
-              {t}
-            </button>
-          ))}
-        </div>
-        <div className="time-group">
-          {TIME_FILTERS.map(t => (
-            <button
-              key={t}
-              className={`time-btn ${timeFilter === t ? 'active' : ''}`}
-              onClick={() => setTimeFilter(t)}
-            >
-              {t}
-            </button>
-          ))}
-        </div>
+        <h1 className="page-title">Analytics</h1>
+        <span className="section-sub">
+          {loading
+            ? 'Reading Robinhood Chain…'
+            : `${activity?.totals?.distributions ?? 0} distributions indexed · generated ${activity?.generatedAt ? new Date(activity.generatedAt).toLocaleString() : ''}`}
+        </span>
       </div>
 
       {/* Summary Stats */}
@@ -43,59 +43,93 @@ export default function Analytics() {
         <div className="analytics-stat">
           <div className="analytics-stat-label">Paid to holders</div>
           <div className="analytics-stat-val">
-            {ANALYTICS_STATS.paidToHolders} <span className="unit">SOL</span>
+            {activity ? Number(activity.totals.holders).toLocaleString('en-US') : '—'} <span className="unit">{symbol}</span>
           </div>
         </div>
         <div className="analytics-stat">
-          <div className="analytics-stat-label">Fees claimed</div>
+          <div className="analytics-stat-label">Fees paid</div>
           <div className="analytics-stat-val">
-            {ANALYTICS_STATS.feesClaimed} <span className="unit">SOL</span>
+            {activity
+              ? (Number(activity.totals.protocol) + Number(activity.totals.desks) + Number(activity.totals.buybacks) + Number(activity.totals.platformOps)).toLocaleString('en-US')
+              : '—'} <span className="unit">{symbol}</span>
           </div>
         </div>
         <div className="analytics-stat">
-          <div className="analytics-stat-label">Volume, all time</div>
-          <div className="analytics-stat-val">{ANALYTICS_STATS.volumeAllTime}</div>
+          <div className="analytics-stat-label">Volume distributed, all time</div>
+          <div className="analytics-stat-val">
+            {activity ? Number(activity.totals.distributed).toLocaleString('en-US') : '—'}
+          </div>
         </div>
         <div className="analytics-stat">
-          <div className="analytics-stat-label">Locked for pre-stocks</div>
+          <div className="analytics-stat-label">Distributions</div>
           <div className="analytics-stat-val">
-            {ANALYTICS_STATS.lockedPreStocks} <span className="unit">SOL</span>
+            {activity ? activity.totals.distributions : '—'}
           </div>
         </div>
       </div>
 
-      {/* Fees Chart */}
-      <div className="chart-card">
-        <div className="chart-header">
-          <h3>Fees claimed, by day</h3>
-          <span className="chart-date">Sep 15</span>
-        </div>
-        <div className="chart-main-val">248.17 SOL</div>
-        <div className="chart-area">
-          <BarChart />
-        </div>
-        <div className="chart-x-labels">
-          <span>Sep 2</span>
-          <span>Sep 8</span>
-          <span>Sep 15</span>
-        </div>
-      </div>
-
-      {/* Holders Chart */}
+      {/* Holders Chart — real daily totals */}
       <div className="chart-card">
         <div className="chart-header">
           <h3>Paid to holders, by day</h3>
-          <span className="chart-date">Sep 15</span>
+          <span className="chart-date">{symbol}</span>
         </div>
-        <div className="chart-main-val">173.71 SOL</div>
-        <div className="chart-area">
-          <BarChart />
+        {days.length > 0 ? (
+          <>
+            <div className="chart-main-val">{Number(days[days.length - 1].holders).toLocaleString('en-US')} {symbol}</div>
+            <div className="chart-area">
+              <BarChart values={days.map(d => d.holders)} />
+            </div>
+            <div className="chart-x-labels">
+              <span>{days[0].day}</span>
+              <span>{days[Math.floor(days.length / 2)].day}</span>
+              <span>{days[days.length - 1].day}</span>
+            </div>
+          </>
+        ) : (
+          <div className="chart-empty">{loading ? 'Indexing…' : 'No distributions yet.'}</div>
+        )}
+      </div>
+
+      {/* Fees Chart — real daily totals */}
+      <div className="chart-card">
+        <div className="chart-header">
+          <h3>Fees paid, by day</h3>
+          <span className="chart-date">{symbol}</span>
         </div>
-        <div className="chart-x-labels">
-          <span>Sep 2</span>
-          <span>Sep 8</span>
-          <span>Sep 15</span>
+        {days.length > 0 ? (
+          <>
+            <div className="chart-main-val">{Number(days[days.length - 1].fees).toLocaleString('en-US')} {symbol}</div>
+            <div className="chart-area">
+              <BarChart values={days.map(d => d.fees)} color="#4ec994" />
+            </div>
+            <div className="chart-x-labels">
+              <span>{days[0].day}</span>
+              <span>{days[Math.floor(days.length / 2)].day}</span>
+              <span>{days[days.length - 1].day}</span>
+            </div>
+          </>
+        ) : (
+          <div className="chart-empty">{loading ? 'Indexing…' : 'No distributions yet.'}</div>
+        )}
+      </div>
+
+      {/* Distribution history */}
+      <div className="chart-card">
+        <div className="chart-header">
+          <h3>Distributions</h3>
+          <span className="chart-date">newest first</span>
         </div>
+        {(distributions.length === 0) && (
+          <div className="chart-empty">{loading ? 'Indexing…' : 'Nothing distributed yet.'}</div>
+        )}
+        {distributions.slice(0, 10).map(item => (
+          <a key={item.txHash} className="dist-history-row" href={item.txUrl} target="_blank" rel="noreferrer">
+            <span className="dist-history-token">${item.symbol}</span>
+            <span className="dist-history-meta">{item.amount} {item.rewardAssetSymbol} · {item.ago}</span>
+            <span className="dist-history-right">{item.holders} to holders</span>
+          </a>
+        ))}
       </div>
     </div>
   );

@@ -23,8 +23,7 @@ export default function Footer({ onNavigate }) {
           <div className="footer-col">
             <h4>PROTOCOL</h4>
             <button onClick={() => onNavigate('Desks')}>Desks</button>
-            <button onClick={() => onNavigate('Launch token')}>Mint</button>
-            <button onClick={() => alert('Profile coming soon!')}>Profile</button>
+            <button onClick={() => onNavigate('Launch token')}>Launch a coin</button>
           </div>
           <div className="footer-col">
             <h4>LAUNCHER</h4>
@@ -34,10 +33,8 @@ export default function Footer({ onNavigate }) {
           </div>
           <div className="footer-col">
             <h4>MORE</h4>
-            <button onClick={() => alert('Docs coming soon!')}>Docs</button>
-            <button onClick={() => alert('History coming soon!')}>History</button>
             <button onClick={() => onNavigate('Revenue')}>Revenue</button>
-            <button onClick={() => alert('Terms coming soon!')}>Terms</button>
+            <button onClick={() => onNavigate('Rewards')}>Rewards</button>
           </div>
           <div className="footer-col">
             <h4>SOCIAL</h4>

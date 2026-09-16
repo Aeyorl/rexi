@@ -1,7 +1,5 @@
 import { useState } from 'react';
 import { useWallet } from '../context/WalletContext';
-import { STOCK_ASSETS } from '../data/mockData';
-import { launchToken } from '../services/api';
 import { createRexiLaunch } from '../services/rexiChain';
 import {
   REXI_REWARD_ASSET,
@@ -12,8 +10,6 @@ import {
 } from '../services/deployments';
 import './LaunchToken.css';
 
-const CASH_OPTIONS = ['None', '$50', '$100', '$250', '$500'];
-const TABS = ['All stocks', 'Public stocks', 'Pre-IPO'];
 const DEFAULT_SUPPLY = '1000000';
 
 export default function LaunchToken() {
@@ -22,13 +18,8 @@ export default function LaunchToken() {
   const [ticker, setTicker] = useState('');
   const [description, setDescription] = useState('');
   const [xLink, setXLink] = useState('');
-  const [cashOption, setCashOption] = useState('None');
   const [supply, setSupply] = useState(DEFAULT_SUPPLY);
   const [rewardAsset, setRewardAsset] = useState(REXI_REWARD_ASSET);
-  const [selectedPair, setSelectedPair] = useState('AAPLx');
-  const [holderMode, setHolderMode] = useState('pair');
-  const [assetTab, setAssetTab] = useState('All 150');
-  const [assetSearch, setAssetSearch] = useState('');
   const [imageFile, setImageFile] = useState(null);
   const [launchStatus, setLaunchStatus] = useState(null); // 'signing' | 'deploying' | 'success'
   const [launchError, setLaunchError] = useState('');
@@ -52,32 +43,11 @@ export default function LaunchToken() {
       const chainLaunch = await createRexiLaunch({ name, symbol: ticker, rewardAsset, supply });
       setCreatedLaunch(chainLaunch);
       setLaunchStatus('success');
-
-      // Recording the launch off-chain is best effort: the token already exists on chain.
-      try {
-        await launchToken({
-          name,
-          symbol: ticker,
-          description,
-          supply: Number(supply),
-          rewardAsset,
-          firstBuyUsd: cashOption === 'None' ? 0 : Number(cashOption.replace('$', '')),
-          txHash: chainLaunch.hash,
-          tokenAddress: chainLaunch.token
-        });
-      } catch (recordError) {
-        console.warn('Backend launch record failed; the on-chain launch is unaffected.', recordError);
-      }
     } catch (err) {
       setLaunchStatus(null);
       setLaunchError(err.shortMessage || err.message || 'Launch failed. Check the Rexi service and try again.');
     }
   };
-
-  const filteredAssets = STOCK_ASSETS.filter(a =>
-    a.symbol.toLowerCase().includes(assetSearch.toLowerCase()) ||
-    a.name.toLowerCase().includes(assetSearch.toLowerCase())
-  );
 
   // The split the deployed launchpad actually applies (REXI_FEE_SPLIT in deployments.js).
   const feeBreakdown = REXI_FEE_SPLIT;
@@ -190,32 +160,12 @@ export default function LaunchToken() {
         />
       </div>
 
-      {/* First Buy */}
+      {/* Reward Asset (real, on-chain) */}
       <div className="form-section">
-        <label className="section-label">YOUR FIRST BUY</label>
+        <label className="section-label">REWARD ASSET</label>
         <p className="section-desc">
-          Your first buy is funded in USD through Robinhood and allocated to the selected stock reward.
-        </p>
-        <div className="sol-options">
-          {CASH_OPTIONS.map(opt => (
-            <button
-              key={opt}
-              className={`sol-btn ${cashOption === opt ? 'active' : ''}`}
-              onClick={() => setCashOption(opt)}
-            >
-              {opt}
-            </button>
-          ))}
-          <div className="sol-display">{cashOption}</div>
-        </div>
-      </div>
-
-      {/* Paired With */}
-      <div className="form-section">
-        <label className="section-label">PAIRED WITH</label>
-        <p className="section-desc">
-          The reward asset is a real ERC-20 on Robinhood Chain and is what holders are paid in. On testnet the
-          only deployed reward asset is the Rexi stand-in below; the ticker grid under it is design reference.
+          A real ERC-20 on Robinhood Chain that holders are paid in. On testnet the only deployed
+          reward asset is the Rexi stand-in below.
         </p>
         <div className="reward-asset-row">
           {REXI_REWARD_ASSETS.map(asset => (
@@ -241,68 +191,6 @@ export default function LaunchToken() {
             </button>
           ))}
         </div>
-        <div className="asset-tabs">
-          {TABS.map(tab => (
-            <button
-              key={tab}
-              className={`asset-tab ${assetTab === tab ? 'active' : ''}`}
-              onClick={() => setAssetTab(tab)}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
-        <div className="asset-search-wrap">
-          <svg width="13" height="13" viewBox="0 0 14 14" fill="none" style={{ color: 'var(--text-muted)' }}>
-            <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.5"/>
-            <path d="M9.5 9.5L12 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-          </svg>
-          <input
-            className="asset-search"
-            placeholder="Search by ticker, name or address"
-            value={assetSearch}
-            onChange={e => setAssetSearch(e.target.value)}
-          />
-        </div>
-        <div className="asset-grid">
-          {filteredAssets.map(asset => (
-            <button
-              key={asset.symbol}
-              className={`asset-item ${selectedPair === asset.symbol ? 'active' : ''}`}
-              onClick={() => setSelectedPair(asset.symbol)}
-            >
-              <div className="asset-icon">{asset.symbol.slice(0, 2).toUpperCase()}</div>
-              <div className="asset-info">
-                <span className="asset-symbol">{asset.symbol}</span>
-                <span className="asset-name">{asset.name}</span>
-              </div>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Holders Are Paid */}
-      <div className="form-section">
-        <label className="section-label">HOLDERS ARE PAID</label>
-        <div className="holder-options">
-          <button
-            className={`holder-btn ${holderMode === 'pair' ? 'active' : ''}`}
-            onClick={() => setHolderMode('pair')}
-          >
-            <span className="holder-title">The pair</span>
-            <span className="holder-desc">What it earns, sent straight out</span>
-          </button>
-          <button
-            className={`holder-btn ${holderMode === 'basket' ? 'active' : ''}`}
-            onClick={() => setHolderMode('basket')}
-          >
-            <span className="holder-title">A basket</span>
-            <span className="holder-desc">Up to 5, one each round</span>
-          </button>
-        </div>
-        <p className="section-desc">
-          Holders are paid AAPLx itself. Nothing is traded, so there is no route to find and no slippage.
-        </p>
       </div>
 
       {/* Launch Summary */}
@@ -340,16 +228,12 @@ export default function LaunchToken() {
           <div className="summary-row">
             <span>Holders are paid in</span>
             <span className="pair-val">
-              <span className="pair-dot">⬛</span> {rewardAssetInfo?.symbol || selectedPair}
+              <span className="pair-dot">⬛</span> {rewardAssetInfo?.symbol}
             </span>
           </div>
           <div className="summary-row">
             <span>Supply</span>
             <span>{(supply || '0').replace(/\B(?=(\d{3})+(?!\d))/g, ',')} {ticker ? `$${ticker}` : ''}</span>
-          </div>
-          <div className="summary-row">
-            <span>Your first buy</span>
-            <span>{cashOption}</span>
           </div>
         </div>
 

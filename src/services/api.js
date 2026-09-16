@@ -1,12 +1,16 @@
 /**
  * Rexi frontend API client.
+ *
+ * The only backend surface is the real on-chain index
+ * (server/routes/chain.mjs). No simulated data lives here.
  */
 
 const API_BASE = '/api';
 
 /**
- * Full Robinhood Chain index: launches, aggregate stats, recent distributions
- * and the launchpad address. Returns null when the index route is unreachable.
+ * Full Robinhood Chain index: launches across every indexed launchpad,
+ * aggregate stats, recent distributions and the canonical launchpad address.
+ * Returns null when the index route is unreachable.
  */
 export async function fetchChainIndex() {
   try {
@@ -37,89 +41,29 @@ export async function fetchChainLaunch(token) {
   }
 }
 
-export async function fetchTokens({ search = '', sort = 'FDV' } = {}) {
+/**
+ * Everything the finance pages show: cumulative fee splits from real
+ * distributions, daily buckets and the treasury balances actually held
+ * on-chain. Returns null when unreachable.
+ */
+export async function fetchChainActivity() {
   try {
-    const params = new URLSearchParams();
-    if (search) params.append('search', search);
-    if (sort) params.append('sort', sort);
-    const res = await fetch(`${API_BASE}/tokens?${params.toString()}`);
+    const res = await fetch(`${API_BASE}/chain/activity`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    return data.data;
+    return await res.json();
   } catch (err) {
-    console.warn('Backend fetchTokens failed, falling back', err);
+    console.warn('Chain activity fetch failed', err);
     return null;
   }
 }
 
-export async function launchToken(tokenData) {
-  const res = await fetch(`${API_BASE}/tokens/launch`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(tokenData)
-  });
-  if (!res.ok) {
-    const err = await res.json();
-    throw new Error(err.error || 'Failed to launch token');
-  }
-  return res.json();
-}
-
-export async function fetchRobinhoodAccount() {
+/** Liveness probe for the solvency audit. Null when the route is down. */
+export async function fetchChainHealth() {
   try {
-    const res = await fetch(`${API_BASE}/robinhood/account`);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    return data.data;
+    const res = await fetch(`${API_BASE}/chain/health`);
+    return await res.json();
   } catch (err) {
-    console.warn('Backend fetchRobinhoodAccount failed', err);
+    console.warn('Chain health fetch failed', err);
     return null;
   }
-}
-
-export async function submitRobinhoodOrder(orderData) {
-  const res = await fetch(`${API_BASE}/robinhood/orders`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(orderData)
-  });
-  if (!res.ok) {
-    const err = await res.json();
-    throw new Error(err.error || 'Order execution failed');
-  }
-  return res.json();
-}
-
-export async function depositRobinhoodFunds(amount) {
-  const res = await fetch(`${API_BASE}/robinhood/deposit`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ amount })
-  });
-  if (!res.ok) {
-    const err = await res.json();
-    throw new Error(err.error || 'Deposit failed');
-  }
-  return res.json();
-}
-
-export async function fetchStockQuotes() {
-  try {
-    const res = await fetch(`${API_BASE}/stocks`);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    return data.data;
-  } catch (err) {
-    console.warn('Backend fetchStockQuotes failed', err);
-    return null;
-  }
-}
-
-export async function claimDividends() {
-  const res = await fetch(`${API_BASE}/stocks/meta/claim`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' }
-  });
-  if (!res.ok) throw new Error('Claim failed');
-  return res.json();
 }
