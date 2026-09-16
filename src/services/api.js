@@ -1,16 +1,38 @@
 /**
- * OTC Desks & Robinhood Backend API Client
+ * Rexi frontend API client.
  */
 
 const API_BASE = '/api';
 
-export async function fetchChainLaunches() {
+/**
+ * Full Robinhood Chain index: launches, aggregate stats, recent distributions
+ * and the launchpad address. Returns null when the index route is unreachable.
+ */
+export async function fetchChainIndex() {
   try {
     const res = await fetch(`${API_BASE}/chain/launches`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } catch (err) {
+    console.warn('Chain index fetch failed', err);
+    return null;
+  }
+}
+
+/** Convenience wrapper returning just the indexed launches array. */
+export async function fetchChainLaunches() {
+  const index = await fetchChainIndex();
+  return index?.data ?? null;
+}
+
+/** Single launch detail (metadata, reward accounting, related distributions). */
+export async function fetchChainLaunch(token) {
+  try {
+    const res = await fetch(`${API_BASE}/chain/launches/${token}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return (await res.json()).data;
   } catch (err) {
-    console.warn('Chain launch fetch failed', err);
+    console.warn('Chain launch detail fetch failed', err);
     return null;
   }
 }

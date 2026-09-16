@@ -1,8 +1,9 @@
-import { useMemo } from 'react';
+import { useId, useMemo } from 'react';
 import { generateSparkline } from '../data/mockData';
 
 export default function Sparkline({ trend = 'random', color, width = 120, height = 40 }) {
   const data = useMemo(() => generateSparkline(trend), [trend]);
+  const gradientId = useId().replace(/:/g, '');
   
   const min = Math.min(...data);
   const max = Math.max(...data);
@@ -17,7 +18,7 @@ export default function Sparkline({ trend = 'random', color, width = 120, height
   const fillPoints = `0,${height} ${points} ${width},${height}`;
   
   const lineColor = color || (trend === 'up' ? '#4ec994' : '#e05252');
-  const fillId = `fill-${trend}-${Math.random().toString(36).slice(2, 7)}`;
+  const fillId = `fill-${trend}-${gradientId}`;
 
   return (
     <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} style={{ overflow: 'visible' }}>

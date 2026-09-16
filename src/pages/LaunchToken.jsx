@@ -3,11 +3,18 @@ import { useWallet } from '../context/WalletContext';
 import { STOCK_ASSETS } from '../data/mockData';
 import { launchToken } from '../services/api';
 import { createRexiLaunch } from '../services/rexiChain';
-import { REXI_TEST_STOCK_TOKEN_TESTNET } from '../services/robinhoodChain';
+import {
+  REXI_REWARD_ASSET,
+  REXI_REWARD_ASSETS,
+  REXI_FEE_SPLIT,
+  REXI_LAUNCHPAD,
+  explorerAddressUrl
+} from '../services/deployments';
 import './LaunchToken.css';
 
 const CASH_OPTIONS = ['None', '$50', '$100', '$250', '$500'];
 const TABS = ['All stocks', 'Public stocks', 'Pre-IPO'];
+const DEFAULT_SUPPLY = '1000000';
 
 export default function LaunchToken() {
   const { connected, openModal } = useWallet();
@@ -16,6 +23,8 @@ export default function LaunchToken() {
   const [description, setDescription] = useState('');
   const [xLink, setXLink] = useState('');
   const [cashOption, setCashOption] = useState('None');
+  const [supply, setSupply] = useState(DEFAULT_SUPPLY);
+  const [rewardAsset, setRewardAsset] = useState(REXI_REWARD_ASSET);
   const [selectedPair, setSelectedPair] = useState('AAPLx');
   const [holderMode, setHolderMode] = useState('pair');
   const [assetTab, setAssetTab] = useState('All 150');
@@ -23,24 +32,45 @@ export default function LaunchToken() {
   const [imageFile, setImageFile] = useState(null);
   const [launchStatus, setLaunchStatus] = useState(null); // 'signing' | 'deploying' | 'success'
   const [launchError, setLaunchError] = useState('');
+  const [createdLaunch, setCreatedLaunch] = useState(null);
 
   const handleLaunch = async () => {
     if (!name || !ticker) {
       setLaunchError('Please provide a token name and symbol/ticker.');
       return;
     }
+    if (!/^[1-9][0-9]*$/.test(supply)) {
+      setLaunchError('Enter a whole-number supply greater than zero.');
+      return;
+    }
     setLaunchError('');
+    setCreatedLaunch(null);
     setLaunchStatus('signing');
 
     try {
-      await new Promise(r => setTimeout(r, 600));
       setLaunchStatus('deploying');
-      const chainLaunch = await createRexiLaunch({ name, symbol: ticker, rewardAsset: REXI_TEST_STOCK_TOKEN_TESTNET, supply: 1000000 });
-      await launchToken({ name, symbol: ticker, description, pair: selectedPair, firstBuyUsd: cashOption === 'None' ? 0 : Number(cashOption.replace('$', '')), txHash: chainLaunch.hash });
+      const chainLaunch = await createRexiLaunch({ name, symbol: ticker, rewardAsset, supply });
+      setCreatedLaunch(chainLaunch);
       setLaunchStatus('success');
+
+      // Recording the launch off-chain is best effort: the token already exists on chain.
+      try {
+        await launchToken({
+          name,
+          symbol: ticker,
+          description,
+          supply: Number(supply),
+          rewardAsset,
+          firstBuyUsd: cashOption === 'None' ? 0 : Number(cashOption.replace('$', '')),
+          txHash: chainLaunch.hash,
+          tokenAddress: chainLaunch.token
+        });
+      } catch (recordError) {
+        console.warn('Backend launch record failed; the on-chain launch is unaffected.', recordError);
+      }
     } catch (err) {
       setLaunchStatus(null);
-      setLaunchError(err.message || 'Launch failed. Check the Rexi service and try again.');
+      setLaunchError(err.shortMessage || err.message || 'Launch failed. Check the Rexi service and try again.');
     }
   };
 
@@ -49,14 +79,9 @@ export default function LaunchToken() {
     a.name.toLowerCase().includes(assetSearch.toLowerCase())
   );
 
-  const feeBreakdown = [
-    { label: 'Holders, in selected stock', value: '67.5%' },
-    { label: 'Desks', value: '10%' },
-    { label: 'Protocol', value: '5%' },
-    { label: 'Rexi buybacks', value: '10%' },
-    { label: 'Rexi holders, in cash', value: '5%' },
-    { label: 'Platform operations', value: '2.5%' },
-  ];
+  // The split the deployed launchpad actually applies (REXI_FEE_SPLIT in deployments.js).
+  const feeBreakdown = REXI_FEE_SPLIT;
+  const rewardAssetInfo = REXI_REWARD_ASSETS.find(a => a.address === rewardAsset) || REXI_REWARD_ASSETS[0];
 
   return (
     <div className="launch-token">
@@ -146,6 +171,25 @@ export default function LaunchToken() {
         />
       </div>
 
+      {/* Supply */}
+      <div className="form-section">
+        <div className="field-header">
+          <label>SUPPLY</label>
+          <span className="char-count">whole tokens</span>
+        </div>
+        <p className="section-desc">
+          Minted once, to your wallet, when the launch executes. Holders then earn {rewardAssetInfo?.symbol || 'the reward asset'} in
+          proportion to their balance.
+        </p>
+        <input
+          className="form-input"
+          inputMode="numeric"
+          placeholder={DEFAULT_SUPPLY}
+          value={supply}
+          onChange={e => setSupply(e.target.value.replace(/[^0-9]/g, ''))}
+        />
+      </div>
+
       {/* First Buy */}
       <div className="form-section">
         <label className="section-label">YOUR FIRST BUY</label>
@@ -169,6 +213,34 @@ export default function LaunchToken() {
       {/* Paired With */}
       <div className="form-section">
         <label className="section-label">PAIRED WITH</label>
+        <p className="section-desc">
+          The reward asset is a real ERC-20 on Robinhood Chain and is what holders are paid in. On testnet the
+          only deployed reward asset is the Rexi stand-in below; the ticker grid under it is design reference.
+        </p>
+        <div className="reward-asset-row">
+          {REXI_REWARD_ASSETS.map(asset => (
+            <button
+              key={asset.address}
+              className={`reward-asset-btn ${rewardAsset === asset.address ? 'active' : ''}`}
+              onClick={() => setRewardAsset(asset.address)}
+            >
+              <span className="reward-asset-symbol">{asset.symbol}</span>
+              <span className="reward-asset-name">
+                {asset.name}{asset.testnetOnly ? ' · testnet' : ''}
+              </span>
+              <span className="reward-asset-addr">
+                <a
+                  href={explorerAddressUrl(asset.address)}
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={e => e.stopPropagation()}
+                >
+                  {asset.address.slice(0, 10)}…{asset.address.slice(-6)}
+                </a>
+              </span>
+            </button>
+          ))}
+        </div>
         <div className="asset-tabs">
           {TABS.map(tab => (
             <button
@@ -255,17 +327,25 @@ export default function LaunchToken() {
         <div className="summary-rows">
           <div className="summary-row">
             <span>Launching on</span>
-            <span>Rexi · Robinhood</span>
+            <span>Robinhood Chain Testnet</span>
           </div>
           <div className="summary-row">
-            <span>Paired with</span>
+            <span>Launchpad</span>
             <span className="pair-val">
-              <span className="pair-dot">⬛</span> {selectedPair}
+              <a href={explorerAddressUrl(REXI_LAUNCHPAD)} target="_blank" rel="noreferrer">
+                {REXI_LAUNCHPAD.slice(0, 8)}…{REXI_LAUNCHPAD.slice(-6)}
+              </a>
             </span>
           </div>
           <div className="summary-row">
-            <span>Trading fee</span>
-            <span>1%</span>
+            <span>Holders are paid in</span>
+            <span className="pair-val">
+              <span className="pair-dot">⬛</span> {rewardAssetInfo?.symbol || selectedPair}
+            </span>
+          </div>
+          <div className="summary-row">
+            <span>Supply</span>
+            <span>{(supply || '0').replace(/\B(?=(\d{3})+(?!\d))/g, ',')} {ticker ? `$${ticker}` : ''}</span>
           </div>
           <div className="summary-row">
             <span>Your first buy</span>
@@ -274,7 +354,7 @@ export default function LaunchToken() {
         </div>
 
         <div className="fee-breakdown">
-          <div className="fee-breakdown-label">OF EVERY FEE</div>
+          <div className="fee-breakdown-label">OF EVERY DISTRIBUTION</div>
           {feeBreakdown.map(item => (
             <div key={item.label} className="summary-row">
               <span>{item.label}</span>
@@ -284,7 +364,9 @@ export default function LaunchToken() {
         </div>
 
         <p className="rent-note">
-          A holder needs a token account before {selectedPair} can reach them. This opens one, once, and it is theirs — worth about $0.58, refundable to them if they ever close it.
+          No fee to launch: the launchpad deploys your ERC-20 and registers it against the reward asset
+          {rewardAssetInfo ? ` (${rewardAssetInfo.symbol})` : ''}. Holders accrue the reward asset against their balance and claim it
+          whenever they like.
         </p>
 
         {launchError && (
@@ -303,8 +385,24 @@ export default function LaunchToken() {
           <div className="launch-success-banner">
             <span className="success-icon">🎉</span>
             <div className="success-text">
-              <strong>${ticker} Launched Successfully!</strong>
-              <span>Bonding curve active. Holders now earn {selectedPair} dividends.</span>
+              <strong>${ticker} deployed on Robinhood Chain Testnet</strong>
+              <span>Holders now accrue {rewardAssetInfo?.symbol || selectedPair} rewards, pro-rata to their balance.</span>
+              {createdLaunch?.token && (
+                <span>
+                  Token{' '}
+                  <a className="tx-link" href={createdLaunch.tokenUrl} target="_blank" rel="noreferrer">
+                    {createdLaunch.token}
+                  </a>
+                  {createdLaunch.txUrl && (
+                    <>
+                      {' · '}
+                      <a className="tx-link" href={createdLaunch.txUrl} target="_blank" rel="noreferrer">
+                        view launch transaction
+                      </a>
+                    </>
+                  )}
+                </span>
+              )}
             </div>
           </div>
         ) : (
@@ -315,9 +413,9 @@ export default function LaunchToken() {
             onClick={handleLaunch}
           >
             {launchStatus === 'signing'
-              ? 'Requesting Wallet Signature...'
+              ? 'Confirm in your wallet...'
               : launchStatus === 'deploying'
-              ? 'Deploying Bonding Curve...'
+              ? 'Deploying on Robinhood Chain...'
               : 'Launch Token'}
           </button>
         )}

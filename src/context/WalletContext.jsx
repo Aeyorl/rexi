@@ -1,6 +1,7 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState } from 'react';
 import { submitRobinhoodOrder, depositRobinhoodFunds, fetchRobinhoodAccount } from '../services/api';
 import { connectRobinhoodChain } from '../services/robinhoodChain';
+import { shortAddress as formatShortAddress } from '../services/deployments';
 
 const WalletContext = createContext(null);
 
@@ -14,44 +15,41 @@ const INITIAL_HOLDINGS = [
   { symbol: 'SPACEX', name: 'SpaceX Pre-IPO', shares: 5.0, price: 920.00, total: 4600.00 }
 ];
 
+function readSavedSession() {
+  try {
+    const saved = localStorage.getItem(ROBINHOOD_STORAGE_KEY);
+    if (!saved) return null;
+    const parsed = JSON.parse(saved);
+    return parsed?.connected ? parsed : null;
+  } catch (e) {
+    console.warn('Failed to restore Robinhood session', e);
+    return null;
+  }
+}
+
 export function WalletProvider({ children }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [tradeModalOpen, setTradeModalOpen] = useState(false);
   const [activeTradeAsset, setActiveTradeAsset] = useState(null);
 
-  const [connected, setConnected] = useState(false);
+  // The stored session is read once on first render instead of in an effect.
+  const [restored] = useState(readSavedSession);
+
+  const [connected, setConnected] = useState(Boolean(restored));
   const [connecting, setConnecting] = useState(false);
-  const [walletType, setWalletType] = useState(null); // 'robinhood_wallet' | 'robinhood_connect' | 'demo'
-  const [walletName, setWalletName] = useState(null);
-  const [accountNumber, setAccountNumber] = useState(null);
-  const [walletAddress, setWalletAddress] = useState(null);
-  const [buyingPower, setBuyingPower] = useState(10000.00);
-  const [holdings, setHoldings] = useState(INITIAL_HOLDINGS);
+  const [walletType, setWalletType] = useState(restored?.walletType || (restored ? 'robinhood_wallet' : null));
+  const [walletName, setWalletName] = useState(restored?.walletName || (restored ? 'Robinhood Wallet' : null));
+  const [accountNumber, setAccountNumber] = useState(restored?.accountNumber || (restored ? 'RH-8492-1084' : null));
+  const [walletAddress, setWalletAddress] = useState(restored?.walletAddress || (restored ? '0x49e...82a9' : null));
+  const [buyingPower, setBuyingPower] = useState(restored?.buyingPower ?? 10000.00);
+  const [holdings, setHoldings] = useState(restored?.holdings || INITIAL_HOLDINGS);
 
   // Calculate total portfolio value
   const totalHoldingsValue = holdings.reduce((sum, h) => sum + (h.shares * h.price), 0);
   const totalAccountValue = buyingPower + totalHoldingsValue;
 
-  // Restore session
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(ROBINHOOD_STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed.connected) {
-          setConnected(true);
-          setWalletType(parsed.walletType || 'robinhood_wallet');
-          setWalletName(parsed.walletName || 'Robinhood Wallet');
-          setAccountNumber(parsed.accountNumber || 'RH-8492-1084');
-          setWalletAddress(parsed.walletAddress || '0x49e...82a9');
-          setBuyingPower(parsed.buyingPower ?? 10000.00);
-          if (parsed.holdings) setHoldings(parsed.holdings);
-        }
-      }
-    } catch (e) {
-      console.warn('Failed to restore Robinhood session', e);
-    }
-  }, []);
+  // On-chain address form used by the chain pages.
+  const shortAddress = walletAddress ? formatShortAddress(walletAddress) : null;
 
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
@@ -180,6 +178,7 @@ export function WalletProvider({ children }) {
       walletName,
       accountNumber,
       walletAddress,
+      shortAddress,
       buyingPower,
       totalHoldingsValue,
       totalAccountValue,

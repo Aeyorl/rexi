@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useWallet } from '../context/WalletContext';
 import Sparkline from '../components/Sparkline';
 import { TOKENS } from '../data/mockData';
-import { fetchChainLaunches, fetchTokens } from '../services/api';
+import { fetchChainIndex, fetchTokens } from '../services/api';
 import './Explore.css';
 
 const FILTERS = ['FDV', 'Recent', '24h volume'];
@@ -27,7 +27,7 @@ export default function Explore({ onNavigate }) {
   const [activeFilter, setActiveFilter] = useState('FDV');
   const [page, setPage] = useState(1);
   const [tokenList, setTokenList] = useState(TOKENS);
-  const [chainLaunchCount, setChainLaunchCount] = useState(null);
+  const [chainIndex, setChainIndex] = useState(null);
   const ITEMS_PER_PAGE = 12;
 
   useEffect(() => {
@@ -43,8 +43,17 @@ export default function Explore({ onNavigate }) {
   }, [search, activeFilter]);
 
   useEffect(() => {
-    fetchChainLaunches().then(data => { if (data) setChainLaunchCount(data.length); });
+    let active = true;
+    async function loadChain() {
+      const index = await fetchChainIndex();
+      if (active && index) setChainIndex(index);
+    }
+    loadChain();
+    return () => { active = false; };
   }, []);
+
+  const chainLaunches = chainIndex?.data ?? [];
+  const chainStats = chainIndex?.stats ?? null;
 
   const filtered = tokenList.filter(t =>
     t.symbol.toLowerCase().includes(search.toLowerCase()) ||
@@ -78,16 +87,16 @@ export default function Explore({ onNavigate }) {
           </div>
           <div className="hero-stats">
             <div className="hero-stat">
-              <span className="hero-stat-val">$1.7M</span>
-              <span className="hero-stat-label">Rewards distributed</span>
+              <span className="hero-stat-val">{chainStats?.launchCount ?? '—'}</span>
+              <span className="hero-stat-label">Launches on testnet</span>
             </div>
             <div className="hero-stat">
-              <span className="hero-stat-val">$2.5M</span>
-              <span className="hero-stat-label">Fees generated</span>
+              <span className="hero-stat-val">{chainStats?.distributions ?? '—'}</span>
+              <span className="hero-stat-label">Reward distributions</span>
             </div>
             <div className="hero-stat">
-              <span className="hero-stat-val">$133K</span>
-              <span className="hero-stat-label">Buybacks</span>
+              <span className="hero-stat-val">{chainStats?.holderPayouts ?? '—'}</span>
+              <span className="hero-stat-label">Holder payouts</span>
             </div>
           </div>
         </div>
@@ -107,9 +116,68 @@ export default function Explore({ onNavigate }) {
         </div>
       </div>
 
+      {/* Live Robinhood Chain launches (real, indexed from the launchpad) */}
+      <div className="chain-launches">
+        <div className="section-header">
+          <h2>Live on Robinhood Chain Testnet</h2>
+          <span className="section-sub">
+            {chainIndex?.launchpad
+              ? `launchpad ${chainIndex.launchpad.slice(0, 6)}…${chainIndex.launchpad.slice(-4)}`
+              : 'indexing…'}
+          </span>
+        </div>
+        {chainLaunches.length === 0 ? (
+          <div className="chain-empty">
+            {chainIndex ? 'No launches indexed yet — launch the first one.' : 'Reading the launchpad…'}
+          </div>
+        ) : (
+          <div className="chain-grid">
+            {chainLaunches.map(launch => (
+              <a
+                key={launch.token}
+                className="chain-card"
+                href={launch.tokenUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <div className="chain-card-top">
+                  <span className="chain-avatar">{(launch.symbol || '??').slice(0, 2).toUpperCase()}</span>
+                  <div className="chain-meta">
+                    <span className="chain-symbol">${launch.symbol || 'unknown'}</span>
+                    <span className="chain-name">{launch.name || 'Unnamed launch'}</span>
+                  </div>
+                  <span className={`chain-status ${launch.active ? 'live' : 'closed'}`}>
+                    {launch.active ? 'live' : 'closed'}
+                  </span>
+                </div>
+                <div className="chain-rows">
+                  <div className="chain-row">
+                    <span>Supply</span>
+                    <span>{launch.supplyFormatted ?? '—'} ${launch.symbol || ''}</span>
+                  </div>
+                  <div className="chain-row">
+                    <span>Pays holders</span>
+                    <span>{launch.rewardAssetSymbol || 'reward asset'}</span>
+                  </div>
+                  <div className="chain-row">
+                    <span>Distributed</span>
+                    <span>{launch.distributed} {launch.rewardAssetSymbol}</span>
+                  </div>
+                  <div className="chain-row">
+                    <span>Claims</span>
+                    <span>{launch.claimCount} · {launch.claimed} {launch.rewardAssetSymbol}</span>
+                  </div>
+                </div>
+                <span className="chain-address">{launch.token.slice(0, 10)}…{launch.token.slice(-6)}</span>
+              </a>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Token List Controls */}
       <div className="token-controls">
-        {chainLaunchCount !== null && <span className="sort-label">{chainLaunchCount} live Robinhood launches</span>}
+        {chainStats && <span className="sort-label">{chainStats.launchCount} live Robinhood launches</span>}
         <div className="search-wrap">
           <svg className="search-icon" width="14" height="14" viewBox="0 0 14 14" fill="none">
             <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.5"/>

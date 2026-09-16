@@ -1,11 +1,30 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useWallet } from '../context/WalletContext';
 import './RobinhoodTradeModal.css';
 
+// Default asset fallback if none passed
+const DEFAULT_ASSET = {
+  symbol: 'AAPLx',
+  name: 'Apple Inc. Tokenized',
+  price: 228.40,
+  change: '+1.8%',
+  category: 'xStock'
+};
+
 export default function RobinhoodTradeModal() {
+  const { tradeModalOpen, activeTradeAsset } = useWallet();
+
+  if (!tradeModalOpen) return null;
+
+  const asset = activeTradeAsset || DEFAULT_ASSET;
+
+  // Remounting the ticket when the modal opens (or the asset changes) resets the
+  // form, so no state-resetting effect is needed.
+  return <TradeTicket key={asset.symbol} asset={asset} />;
+}
+
+function TradeTicket({ asset }) {
   const {
-    tradeModalOpen,
-    activeTradeAsset,
     closeTradeModal,
     buyingPower,
     holdings,
@@ -16,36 +35,15 @@ export default function RobinhoodTradeModal() {
 
   const [orderType, setOrderType] = useState('BUY'); // 'BUY' | 'SELL'
   const [amountUsd, setAmountUsd] = useState('250');
-  const [sharesInput, setSharesInput] = useState('');
-  const [inputMode, setInputMode] = useState('USD'); // 'USD' | 'SHARES'
   const [submitting, setSubmitting] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
   const [tradeError, setTradeError] = useState('');
-
-  // Default asset fallback if none passed
-  const asset = activeTradeAsset || {
-    symbol: 'AAPLx',
-    name: 'Apple Inc. Tokenized',
-    price: 228.40,
-    change: '+1.8%',
-    category: 'xStock'
-  };
 
   const assetPrice = asset.price || 100.00;
 
   // Existing holding for this asset
   const existingHolding = holdings.find(h => h.symbol === asset.symbol);
   const userShares = existingHolding ? existingHolding.shares : 0;
-
-  useEffect(() => {
-    if (tradeModalOpen) {
-      setOrderComplete(false);
-      setTradeError('');
-      setAmountUsd('250');
-    }
-  }, [tradeModalOpen]);
-
-  if (!tradeModalOpen) return null;
 
   // Calculate corresponding values
   const numericUsd = parseFloat(amountUsd) || 0;

@@ -1,3 +1,47 @@
+/* On-chain reward asset selector */
+.reward-asset-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.reward-asset-btn {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-start;
+  padding: 10px 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+}
+.reward-asset-btn:hover { border-color: var(--accent); }
+.reward-asset-btn.active {
+  border-color: var(--accent);
+  background: rgba(143, 179, 57, 0.08);
+}
+
+.reward-asset-symbol {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.reward-asset-name { font-size: 11px; color: var(--text-muted); }
+.reward-asset-addr {
+  font-size: 10px;
+  font-family: var(--mono, monospace);
+}
+.reward-asset-addr a { color: var(--accent); text-decoration: none; }
+.reward-asset-addr a:hover { text-decoration: underline; }
+
+.tx-link { color: var(--accent); text-decoration: none; word-break: break-all; }
+.tx-link:hover { text-decoration: underline; }
+
+.launch-success-banner a { color: inherit; text-decoration: underline; }
 .launch-token {
   max-width: 680px;
   margin: 0 auto;
