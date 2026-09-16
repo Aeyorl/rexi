@@ -149,6 +149,7 @@ export default function Explore({ onNavigate }) {
                   <span className={`chain-status ${launch.active ? 'live' : 'closed'}`}>
                     {launch.active ? 'live' : 'closed'}
                   </span>
+                  {launch.legacy && <span className="chain-status legacy">legacy</span>}
                 </div>
                 <div className="chain-rows">
                   <div className="chain-row">

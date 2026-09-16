@@ -71,6 +71,28 @@ export const REXI_FEE_SPLIT = [
   { label: 'Platform operations', value: '7.5%' }
 ];
 
+/**
+ * Mainnet is intentionally unimplemented. Nothing here is deployed; this block
+ * exists so mainnet work has one obvious home, gated by the checklist in
+ * SECURITY.md ("Mainnet gate"). Requirements before filling any of this in:
+ *
+ *  1. independent audit of contracts/RexiLaunchpad.sol passes
+ *  2. reward assets are canonical Robinhood stock tokens with verified
+ *     deployers, standard ERC-20 semantics (no transfer fee, no blacklist)
+ *  3. monitoring live: GET /api/chain/health returns status "ok" and
+ *     `node script/monitor.mjs` runs on a schedule with alerting
+ *  4. ownership/treasury keys held in multisig, not a single EOA
+ */
+export const REXI_MAINNET = {
+  network: {
+    chainId: null,      // Robinhood Chain mainnet is chainId 4663
+    rpcUrl: null,
+    blockExplorerUrl: null
+  },
+  launchpad: null,
+  rewardAssets: []
+};
+
 /** Launches created on the canonical launchpad, newest first. */
 export const REXI_GENESIS_LAUNCHES = [
   {

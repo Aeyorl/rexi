@@ -402,6 +402,12 @@
 .launch-right { text-align: right; flex-shrink: 0; display: flex; flex-direction: column; gap: 3px; }
 .launch-total { font-size: 13px; font-weight: 700; color: var(--text-primary); }
 
+.launch-badge.legacy {
+  color: #d8a13a;
+  border-color: rgba(216, 161, 58, 0.35);
+  background: rgba(216, 161, 58, 0.12);
+}
+
 .status-line {
   font-size: 11px;
   color: var(--text-muted);

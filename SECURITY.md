@@ -73,9 +73,45 @@ was added as defence in depth (`ReentrantCall`).
 - **L5 — the launchpad is trust-agnostic about reward assets.** A malicious
   asset can waste gas or revert, but cannot corrupt accounting (I1–I4 hold).
 
+## Monitoring (live)
+
+Two independent checks, both covering every launchpad including superseded ones:
+
+| Check | Implementation | Invariant |
+| --- | --- | --- |
+| Accounting drift | `GET /api/chain/health`, `node script/monitor.mjs` | per launch `rewardBalance == Σ holderAmounts − Σ claims` |
+| Asset solvency | same | per reward asset `balance ≥ Σ buckets` |
+
+`monitor.mjs` exits non-zero on drift (cron-friendly) and `/api/chain/health` returns
+503 with `status:"drift"` so uptime monitoring can alert. Current state: **ok** —
+6 launches across 3 launchpads, 0 drift, 0 insolvent assets.
+
+## Audit package
+
+For an external reviewer, in order of importance:
+
+1. `contracts/RexiLaunchpad.sol` — whole file (token, hook interface, launchpad, test token).
+2. `test/RexiLaunchpadSecurity.t.sol` — 18 tests encoding invariants I1–I4; run with
+   `forge test --match-contract RexiLaunchpadSecurityTest`.
+3. `src/services/deployments.js` + `DEPLOYMENTS.md` — deployed addresses and evidence.
+4. `server/routes/chain.mjs` — off-chain indexer and drift audit.
+5. Known-and-accepted limitations below (L1–L5) and the reward model at the top of this file.
+
+Suggested focus areas for the reviewer: the `_carryPending` debt re-basing arithmetic
+(floor-division edge cases, self-transfers, zero-acc early return), `distribute`'s
+balance-delta measurement, the residual platform-ops share (L3), and whether the
+accumulator's rounding can be gamed across many small distributions.
+
 ## Mainnet gate
 
-Do not deploy to mainnet until: an independent audit of this file set passes;
-L1–L3 are either accepted formally or fixed; reward assets are canonical
-Robinhood stock tokens with verified deployers; and a bug-bounty + monitoring
-plan (bucket vs balance drift alarms) exists.
+Do not deploy to mainnet until **all** of these hold:
+
+- [ ] independent audit of `contracts/RexiLaunchpad.sol` and the tests passes
+- [ ] L1–L3 either formally accepted or fixed; L4 replaced by real Robinhood stock tokens
+- [ ] reward assets are canonical Robinhood stock tokens with verified deployers and
+      standard ERC-20 semantics (no transfer fee, no blacklist, no rebasing)
+- [ ] `REXI_MAINNET` in `src/services/deployments.js` is filled in (chainId 4663) and the
+      placeholders replaced
+- [ ] monitoring runs on a schedule with alerting on `/api/chain/health` drift
+- [ ] treasury and ownership keys are behind a multisig, not a single EOA
+- [ ] a bug bounty and an incident-response runbook exist

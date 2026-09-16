@@ -101,46 +101,46 @@ export async function createRexiLaunch({ name, symbol, rewardAsset = REXI_REWARD
   };
 }
 
-/** Approves the launchpad to pull `amount` of a reward asset from the wallet. */
-export async function approveRewards(amount, asset = REXI_REWARD_ASSET) {
+/** Approves a launchpad to pull `amount` of a reward asset from the wallet. */
+export async function approveRewards(amount, asset = REXI_REWARD_ASSET, launchpad = REXI_LAUNCHPAD) {
   const { client, account } = await walletContext();
   const hash = await client.writeContract({
     address: asset,
     abi: TOKEN_ABI,
     functionName: 'approve',
     account,
-    args: [REXI_LAUNCHPAD, parseUnits(String(amount), 18)]
+    args: [launchpad, parseUnits(String(amount), 18)]
   });
   await waitForReceipt(hash);
-  return { hash, txUrl: explorerTxUrl(hash) };
+  return { hash, launchpad, txUrl: explorerTxUrl(hash) };
 }
 
 /** Distributes a reward asset to every holder of `token` (67.5% to holders). */
-export async function distributeRewards(token, amount, asset = REXI_REWARD_ASSET) {
+export async function distributeRewards(token, amount, asset = REXI_REWARD_ASSET, launchpad = REXI_LAUNCHPAD) {
   const { client, account } = await walletContext();
   const hash = await client.writeContract({
-    address: REXI_LAUNCHPAD,
+    address: launchpad,
     abi: LAUNCHPAD_ABI,
     functionName: 'distribute',
     account,
     args: [token, parseUnits(String(amount), 18)]
   });
   await waitForReceipt(hash);
-  return { hash, account, asset, txUrl: explorerTxUrl(hash) };
+  return { hash, account, asset, launchpad, txUrl: explorerTxUrl(hash) };
 }
 
-/** Claims the caller's accrued rewards for `token`. */
-export async function claimRewards(token) {
+/** Claims the caller's accrued rewards for `token` on its own launchpad. */
+export async function claimRewards(token, launchpad = REXI_LAUNCHPAD) {
   const { client, account } = await walletContext();
   const hash = await client.writeContract({
-    address: REXI_LAUNCHPAD,
+    address: launchpad,
     abi: LAUNCHPAD_ABI,
     functionName: 'claim',
     account,
     args: [token]
   });
   await waitForReceipt(hash);
-  return { hash, account, txUrl: explorerTxUrl(hash) };
+  return { hash, account, launchpad, txUrl: explorerTxUrl(hash) };
 }
 
 /* ------------------------------------------------------------------ *
@@ -164,10 +164,10 @@ export async function readTokenInfo(token) {
   };
 }
 
-export async function readLaunch(token) {
+export async function readLaunch(token, launchpad = REXI_LAUNCHPAD) {
   const client = publicClient();
   const [launch, info] = await Promise.all([
-    client.readContract({ address: REXI_LAUNCHPAD, abi: LAUNCHPAD_ABI, functionName: 'launches', args: [token] }),
+    client.readContract({ address: launchpad, abi: LAUNCHPAD_ABI, functionName: 'launches', args: [token] }),
     readTokenInfo(token).catch(() => null)
   ]);
   const [tokenAddress, rewardAsset, accRewardPerToken, rewardBalance, active] = launch;
@@ -180,8 +180,8 @@ export async function readLaunch(token) {
     rewardBalanceFormatted: formatUnits(rewardBalance, 18),
     info,
     tokenUrl: explorerAddressUrl(token),
-    launchpad: REXI_LAUNCHPAD,
-    launchpadUrl: explorerAddressUrl(REXI_LAUNCHPAD)
+    launchpad,
+    launchpadUrl: explorerAddressUrl(launchpad)
   };
 }
 
@@ -189,13 +189,13 @@ export async function readLaunch(token) {
  * Mirrors the on-chain claim maths: accrued = balance * accRewardPerToken / ACC_SCALE.
  * `pending` is exactly what `claim()` would pay out right now.
  */
-export async function readHolderRewards(token, account) {
+export async function readHolderRewards(token, account, launchpad = REXI_LAUNCHPAD) {
   if (!account) return null;
   const client = publicClient();
   const [launch, balance, debt] = await Promise.all([
-    client.readContract({ address: REXI_LAUNCHPAD, abi: LAUNCHPAD_ABI, functionName: 'launches', args: [token] }),
+    client.readContract({ address: launchpad, abi: LAUNCHPAD_ABI, functionName: 'launches', args: [token] }),
     client.readContract({ address: token, abi: TOKEN_ABI, functionName: 'balanceOf', args: [account] }),
-    client.readContract({ address: REXI_LAUNCHPAD, abi: LAUNCHPAD_ABI, functionName: 'rewardDebt', args: [token, account] })
+    client.readContract({ address: launchpad, abi: LAUNCHPAD_ABI, functionName: 'rewardDebt', args: [token, account] })
   ]);
   const accRewardPerToken = launch[2];
   const accrued = (balance * accRewardPerToken) / ACC_SCALE;
@@ -213,12 +213,12 @@ export async function readHolderRewards(token, account) {
 }
 
 /** Reward-asset balance and launchpad allowance for the connected wallet. */
-export async function readRewardAssetState(account, asset = REXI_REWARD_ASSET) {
+export async function readRewardAssetState(account, asset = REXI_REWARD_ASSET, launchpad = REXI_LAUNCHPAD) {
   if (!account) return null;
   const client = publicClient();
   const [balance, allowance, symbol] = await Promise.all([
     client.readContract({ address: asset, abi: TOKEN_ABI, functionName: 'balanceOf', args: [account] }),
-    client.readContract({ address: asset, abi: TOKEN_ABI, functionName: 'allowance', args: [account, REXI_LAUNCHPAD] }),
+    client.readContract({ address: asset, abi: TOKEN_ABI, functionName: 'allowance', args: [account, launchpad] }),
     client.readContract({ address: asset, abi: TOKEN_ABI, functionName: 'symbol' }).catch(() => 'reward')
   ]);
   return {
@@ -233,15 +233,15 @@ export async function readRewardAssetState(account, asset = REXI_REWARD_ASSET) {
 }
 
 /** Launchpad constants read from the deployed contract, so the UI never guesses. */
-export async function readLaunchpadConfig() {
+export async function readLaunchpadConfig(launchpad = REXI_LAUNCHPAD) {
   const client = publicClient();
   const [bps, holderShare, accScale] = await Promise.all([
-    client.readContract({ address: REXI_LAUNCHPAD, abi: LAUNCHPAD_ABI, functionName: 'BPS' }),
-    client.readContract({ address: REXI_LAUNCHPAD, abi: LAUNCHPAD_ABI, functionName: 'HOLDER_SHARE' }),
-    client.readContract({ address: REXI_LAUNCHPAD, abi: LAUNCHPAD_ABI, functionName: 'ACC_SCALE' })
+    client.readContract({ address: launchpad, abi: LAUNCHPAD_ABI, functionName: 'BPS' }),
+    client.readContract({ address: launchpad, abi: LAUNCHPAD_ABI, functionName: 'HOLDER_SHARE' }),
+    client.readContract({ address: launchpad, abi: LAUNCHPAD_ABI, functionName: 'ACC_SCALE' })
   ]);
   return {
-    launchpad: REXI_LAUNCHPAD,
+    launchpad,
     bps: Number(bps),
     holderShare: Number(holderShare),
     holderSharePercent: (Number(holderShare) / Number(bps)) * 100,

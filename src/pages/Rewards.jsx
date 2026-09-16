@@ -53,15 +53,17 @@ export default function Rewards() {
     return () => { active = false; };
   }, [refreshKey]);
 
-  // Read this wallet's position for the selected launch.
+  // Read this wallet's position for the selected launch, against the launchpad
+  // that actually holds it (legacy launches live on superseded deployments).
   useEffect(() => {
     if (!connected || !walletAddress || !selectedAddress) return;
     let active = true;
+    const pad = selected?.launchpad;
     async function loadWallet() {
       try {
         const [rewards, assetState] = await Promise.all([
-          readHolderRewards(selectedAddress, walletAddress),
-          readRewardAssetState(walletAddress, selected?.rewardAsset || REXI_REWARD_ASSET)
+          readHolderRewards(selectedAddress, walletAddress, pad),
+          readRewardAssetState(walletAddress, selected?.rewardAsset || REXI_REWARD_ASSET, pad)
         ]);
         if (!active) return;
         setHolderRewards(rewards);
@@ -74,7 +76,7 @@ export default function Rewards() {
     }
     loadWallet();
     return () => { active = false; };
-  }, [connected, walletAddress, selectedAddress, selected?.rewardAsset, refreshKey]);
+  }, [connected, walletAddress, selectedAddress, selected?.rewardAsset, selected?.launchpad, refreshKey]);
 
   const runAction = async (kind, fn, successMessage) => {
     setAction(kind);
@@ -96,19 +98,19 @@ export default function Rewards() {
 
   const handleApprove = () => runAction(
     'approving',
-    () => approveRewards(DISTRIBUTION_AMOUNT, selected?.rewardAsset || REXI_REWARD_ASSET),
-    `Approved the launchpad to spend ${DISTRIBUTION_AMOUNT} ${rewardSymbol}.`
+    () => approveRewards(DISTRIBUTION_AMOUNT, selected?.rewardAsset || REXI_REWARD_ASSET, selected?.launchpad),
+    `Approved ${selected?.legacy ? 'the legacy launchpad' : 'the launchpad'} to spend ${DISTRIBUTION_AMOUNT} ${rewardSymbol}.`
   );
 
   const handleDistribute = () => runAction(
     'distributing',
-    () => distributeRewards(selectedAddress, DISTRIBUTION_AMOUNT, selected?.rewardAsset || REXI_REWARD_ASSET),
+    () => distributeRewards(selectedAddress, DISTRIBUTION_AMOUNT, selected?.rewardAsset || REXI_REWARD_ASSET, selected?.launchpad),
     `Distributed ${DISTRIBUTION_AMOUNT} ${rewardSymbol} across ${selected?.symbol} holders.`
   );
 
   const handleClaim = () => runAction(
     'claiming',
-    () => claimRewards(selectedAddress),
+    () => claimRewards(selectedAddress, selected?.launchpad),
     `Claimed accrued ${rewardSymbol} rewards.`
   );
 
@@ -167,7 +169,9 @@ export default function Rewards() {
                 <span className="launch-avatar">{(launch.symbol || '??').slice(0, 2).toUpperCase()}</span>
                 <span className="launch-info">
                   <span className="launch-symbol">
-                    ${launch.symbol || 'unknown'} <span className="launch-badge">{launch.active ? 'live' : 'closed'}</span>
+                    ${launch.symbol || 'unknown'}{' '}
+                    <span className="launch-badge">{launch.active ? 'live' : 'closed'}</span>
+                    {launch.legacy && <span className="launch-badge legacy">legacy pad</span>}
                   </span>
                   <span className="launch-meta">
                     {launch.name || 'Unnamed'} · {launch.supplyFormatted ?? '0'} supply · paid{' '}
@@ -231,6 +235,15 @@ export default function Rewards() {
               <div className="status-line">
                 <a className="tx-link" href={selected.tokenUrl} target="_blank" rel="noreferrer">{selected.token}</a>
                 {` · pays ${selected.rewardAssetSymbol} · ${selected.distributionCount} distribution(s) · ${selected.claimed} ${selected.rewardAssetSymbol} claimed to date`}
+              </div>
+              <div className="status-line">
+                launchpad{' '}
+                <a className="tx-link" href={selected.launchpadUrl} target="_blank" rel="noreferrer">
+                  {selected.launchpad ? `${selected.launchpad.slice(0, 6)}…${selected.launchpad.slice(-4)}` : 'unknown'}
+                </a>
+                {selected.legacy
+                  ? ' · superseded deployment — claim and distribute still work here, but new launches run on the current launchpad'
+                  : ' · current deployment'}
               </div>
               {readsError && <div className="status-line error">{readsError}</div>}
               {message && <div className="status-line">{message}</div>}

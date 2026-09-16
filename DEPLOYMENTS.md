@@ -43,6 +43,36 @@ Treasuries receiving the non-holder share are set at deploy time from `.env`
 Observed split for a 1,000 rAAPL distribution: 675 to holders (67.5%), 50 protocol (5%),
 100 desks (10%), 100 buybacks (10%), 75 retained (platform operations).
 
+## Launchpad rotation procedure
+
+Rolling out a new launchpad must not orphan existing launches:
+
+1. Deploy via `script/deploy-testnet.ps1`.
+2. Update `REXI_LAUNCHPAD` in [`src/services/deployments.js`](src/services/deployments.js) and
+   move the previous address into `REXI_SUPERSEDED_DEPLOYMENTS` with a note saying why.
+3. Update the canonical section of this file with the new address and evidence.
+4. Verify: `script/verify-deployment.ps1` (new address), `node script/check-reads.mjs`,
+   `node script/monitor.mjs`.
+5. Recreate at least one launch on the new launchpad so the index and the Explore
+   page are not empty.
+
+Because the API indexes the canonical launchpad **and** every entry in
+`REXI_SUPERSEDED_DEPLOYMENTS`, launches on old deployments stay visible in the UI and
+remain claimable/distributable — each launch is tagged `legacy` and the app routes
+every write to the launchpad that actually holds it. Superseded launchpads keep working
+on-chain; nothing is frozen as long as they stay listed.
+
+## Monitoring and drift checks
+
+| Check | Command | What it proves |
+| --- | --- | --- |
+| Accounting drift | `node script/monitor.mjs` | per launch: `rewardBalance == Σ holderAmounts − Σ claims` |
+| Asset solvency | `node script/monitor.mjs` | per reward asset: contract balance ≥ Σ of its buckets |
+| HTTP probe | `GET /api/chain/health` | same two checks, 200 `status:"ok"` or 503 `status:"drift"` |
+
+`monitor.mjs` exits non-zero on drift, so it can run from cron or a scheduled agent.
+`/api/chain/health` is the same audit exposed over HTTP for uptime monitoring.
+
 ## How to re-verify
 
 ```powershell
