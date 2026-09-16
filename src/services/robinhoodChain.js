@@ -26,15 +26,26 @@ export const REXI_TEST_STOCK_TOKEN_TESTNET = REXI_REWARD_ASSET;
 /** Every reward asset a launch may pay out with. */
 export const REXI_REWARD_ASSET_LIST = REXI_REWARD_ASSETS;
 
-export async function connectRobinhoodChain() {
-  if (!window.ethereum) throw new Error('Install an EVM wallet such as Robinhood Wallet to continue.');
-  const [address] = await window.ethereum.request({ method: 'eth_requestAccounts' });
-  const currentChainId = await window.ethereum.request({ method: 'eth_chainId' });
-  if (currentChainId?.toLowerCase() === ROBINHOOD_CHAIN_TESTNET.chainId.toLowerCase()) return address;
+/** Switches the injected wallet to Robinhood Chain, adding it only if needed. */
+async function ensureRobinhoodChain() {
+  const target = ROBINHOOD_CHAIN_TESTNET.chainId.toLowerCase();
+
+  const whereAreWe = async () => {
+    const current = await window.ethereum.request({ method: 'eth_chainId' });
+    return typeof current === 'string' ? current.toLowerCase() : null;
+  };
+
+  if ((await whereAreWe()) === target) return;
+
   try {
     await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: ROBINHOOD_CHAIN_TESTNET.chainId }] });
-  } catch (error) {
-    if (error.code !== 4902) throw error;
+    if ((await whereAreWe()) === target) return;
+  } catch {
+    // 4902 means "unknown chain", but some wallets also throw other codes here
+    // even when the chain exists — fall through to add-then-switch.
+  }
+
+  try {
     // EIP-3085: only these keys are accepted — anything extra (e.g. our own
     // chainIdDecimal) makes wallets reject the request.
     await window.ethereum.request({
@@ -47,6 +58,21 @@ export async function connectRobinhoodChain() {
         blockExplorerUrls: ROBINHOOD_CHAIN_TESTNET.blockExplorerUrls
       }]
     });
+  } catch {
+    // A duplicate-network rejection here is harmless: the chain already exists
+    // in the wallet. Decide based on where we actually are, not on the error.
   }
+
+  if ((await whereAreWe()) === target) return;
+  await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: ROBINHOOD_CHAIN_TESTNET.chainId }] });
+  if ((await whereAreWe()) !== target) {
+    throw new Error(`Wallet did not switch to ${ROBINHOOD_CHAIN_TESTNET.chainName}. Switch to chain ${ROBINHOOD_CHAIN_TESTNET.chainIdDecimal} manually and reconnect.`);
+  }
+}
+
+export async function connectRobinhoodChain() {
+  if (!window.ethereum) throw new Error('Install an EVM wallet such as Robinhood Wallet to continue.');
+  const [address] = await window.ethereum.request({ method: 'eth_requestAccounts' });
+  await ensureRobinhoodChain();
   return address;
 }

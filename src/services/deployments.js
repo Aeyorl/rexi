@@ -9,9 +9,12 @@
  * local build (immutable treasury slots masked out).
  */
 
+export const REXI_CHAIN_ID = 46630;
+
 export const REXI_NETWORK = {
-  chainId: '0xb5e6',
-  chainIdDecimal: 46630,
+  // Derived, not hardcoded: a wrong hex here makes wallets refuse to switch.
+  chainId: `0x${REXI_CHAIN_ID.toString(16)}`,
+  chainIdDecimal: REXI_CHAIN_ID,
   chainName: 'Robinhood Chain Testnet',
   nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
   rpcUrl: 'https://rpc.testnet.chain.robinhood.com',
