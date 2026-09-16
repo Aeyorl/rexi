@@ -40,8 +40,10 @@ commit a private key.
 
 ## Status
 
-Testnet only. The reward-accounting accumulator is an initial prototype and has
-not had an independent security review; mainnet is out of scope until it has.
+Testnet only. The reward accounting has been internally reviewed — findings and
+residual limitations in [`SECURITY.md`](SECURITY.md), fixed and covered by
+`forge test --match-contract RexiLaunchpadSecurityTest`. Mainnet is out of scope
+until an independent audit passes.
 
 ---
 
