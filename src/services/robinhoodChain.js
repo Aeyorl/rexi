@@ -35,7 +35,18 @@ export async function connectRobinhoodChain() {
     await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: ROBINHOOD_CHAIN_TESTNET.chainId }] });
   } catch (error) {
     if (error.code !== 4902) throw error;
-    await window.ethereum.request({ method: 'wallet_addEthereumChain', params: [ROBINHOOD_CHAIN_TESTNET] });
+    // EIP-3085: only these keys are accepted — anything extra (e.g. our own
+    // chainIdDecimal) makes wallets reject the request.
+    await window.ethereum.request({
+      method: 'wallet_addEthereumChain',
+      params: [{
+        chainId: ROBINHOOD_CHAIN_TESTNET.chainId,
+        chainName: ROBINHOOD_CHAIN_TESTNET.chainName,
+        nativeCurrency: ROBINHOOD_CHAIN_TESTNET.nativeCurrency,
+        rpcUrls: ROBINHOOD_CHAIN_TESTNET.rpcUrls,
+        blockExplorerUrls: ROBINHOOD_CHAIN_TESTNET.blockExplorerUrls
+      }]
+    });
   }
   return address;
 }
