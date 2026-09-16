@@ -14,7 +14,7 @@ import './Rewards.css';
 const DISTRIBUTION_AMOUNT = 1000;
 
 export default function Rewards() {
-  const { connected, openModal, walletAddress, shortAddress } = useWallet();
+  const { connected, connect, connecting, walletAddress, shortAddress } = useWallet();
 
   const [index, setIndex] = useState(null);
   const [loadError, setLoadError] = useState('');
@@ -211,7 +211,9 @@ export default function Rewards() {
                 Connect a wallet on Robinhood Chain Testnet to read your holding, your accrued rewards, and to claim.
               </span>
             </div>
-            <button className="btn-connect-banner" onClick={openModal}>Connect Wallet</button>
+            <button className="btn-connect-banner" disabled={connecting} onClick={connect}>
+              {connecting ? 'Confirm in your wallet…' : 'Connect Wallet'}
+            </button>
           </div>
         ) : (
           <div className="user-rewards-active">

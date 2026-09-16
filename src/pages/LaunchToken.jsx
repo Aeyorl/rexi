@@ -13,7 +13,7 @@ import './LaunchToken.css';
 const DEFAULT_SUPPLY = '1000000';
 
 export default function LaunchToken() {
-  const { connected, openModal } = useWallet();
+  const { connected, connect, connecting } = useWallet();
   const [name, setName] = useState('');
   const [ticker, setTicker] = useState('');
   const [description, setDescription] = useState('');
@@ -261,9 +261,10 @@ export default function LaunchToken() {
           <button
             type="button"
             className="btn-launch connect-prompt"
-            onClick={openModal}
+            disabled={connecting}
+            onClick={connect}
           >
-            Connect Wallet to Launch
+            {connecting ? 'Confirm in your wallet...' : 'Connect Wallet to Launch'}
           </button>
         ) : launchStatus === 'success' ? (
           <div className="launch-success-banner">

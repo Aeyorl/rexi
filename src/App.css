@@ -4,6 +4,18 @@
   min-height: 100vh;
 }
 
+.connect-error-banner {
+  max-width: 1400px;
+  margin: 0 auto 12px;
+  padding: 12px 16px;
+  background: rgba(224, 82, 82, 0.1);
+  border: 1px solid rgba(224, 82, 82, 0.35);
+  border-radius: var(--radius-lg);
+  color: #e05252;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 .main-content {
   flex: 1;
   padding-top: 8px;

@@ -1,8 +1,9 @@
 // Rexi wallet state: a real EVM wallet on Robinhood Chain — nothing simulated.
 //
-// Connecting requests accounts from the injected provider and switches it to
-// Robinhood Chain Testnet. The session persists only the address and chain so a
-// reload can show the same pill; balances and holdings always come from chain reads.
+// There is no connect modal: `connect()` talks to the injected wallet directly
+// and the outcome is reflected in `connectStatus` / `connectError` so the UI can
+// show it inline. A hung or popup-blocked wallet request times out instead of
+// leaving the page spinning forever.
 import { createContext, useContext, useState } from 'react';
 import { connectRobinhoodChain, ROBINHOOD_CHAIN_TESTNET } from '../services/robinhoodChain';
 import { shortAddress as formatShortAddress } from '../services/deployments';
@@ -10,6 +11,17 @@ import { shortAddress as formatShortAddress } from '../services/deployments';
 const WalletContext = createContext(null);
 
 const REXI_SESSION_KEY = 'rexi_wallet_session';
+const CONNECT_TIMEOUT_MS = 90000;
+
+function withTimeout(promise, ms, message) {
+  let timer;
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => {
+      timer = setTimeout(() => reject(new Error(message)), ms);
+    })
+  ]).finally(() => clearTimeout(timer));
+}
 
 function readSavedSession() {
   try {
@@ -25,24 +37,26 @@ function readSavedSession() {
 }
 
 export function WalletProvider({ children }) {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
   // The stored session is read once on first render instead of in an effect.
   const [restored] = useState(readSavedSession);
 
   const [connected, setConnected] = useState(Boolean(restored));
   const [connecting, setConnecting] = useState(false);
+  const [connectError, setConnectError] = useState('');
   const [walletAddress, setWalletAddress] = useState(restored?.walletAddress || null);
-
-  const openModal = () => setIsModalOpen(true);
-  const closeModal = () => setIsModalOpen(false);
 
   const shortAddress = walletAddress ? formatShortAddress(walletAddress) : null;
 
   const connect = async () => {
+    if (connecting) return null;
     setConnecting(true);
+    setConnectError('');
     try {
-      const address = await connectRobinhoodChain();
+      const address = await withTimeout(
+        connectRobinhoodChain(),
+        CONNECT_TIMEOUT_MS,
+        'Your wallet did not respond. If no wallet window appeared, allow popups for this site and try again.'
+      );
       setConnected(true);
       setWalletAddress(address);
       localStorage.setItem(REXI_SESSION_KEY, JSON.stringify({
@@ -50,15 +64,19 @@ export function WalletProvider({ children }) {
         walletAddress: address,
         chainId: ROBINHOOD_CHAIN_TESTNET.chainIdDecimal
       }));
+      return address;
+    } catch (err) {
+      setConnectError(err?.message || 'Wallet connection failed.');
+      return null;
     } finally {
       setConnecting(false);
-      setIsModalOpen(false);
     }
   };
 
   const disconnect = () => {
     setConnected(false);
     setWalletAddress(null);
+    setConnectError('');
     localStorage.removeItem(REXI_SESSION_KEY);
   };
 
@@ -66,13 +84,11 @@ export function WalletProvider({ children }) {
     <WalletContext.Provider value={{
       connected,
       connecting,
+      connectError,
       walletAddress,
       shortAddress,
       chainId: ROBINHOOD_CHAIN_TESTNET.chainIdDecimal,
       chainName: ROBINHOOD_CHAIN_TESTNET.chainName,
-      isModalOpen,
-      openModal,
-      closeModal,
       connect,
       disconnect
     }}>

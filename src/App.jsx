@@ -1,8 +1,7 @@
 import { useState } from 'react';
-import { WalletProvider } from './context/WalletContext';
+import { WalletProvider, useWallet } from './context/WalletContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
-import WalletModal from './components/WalletModal';
 import Explore from './pages/Explore';
 import LaunchToken from './pages/LaunchToken';
 import Rewards from './pages/Rewards';
@@ -11,7 +10,13 @@ import Desks from './pages/Desks';
 import Analytics from './pages/Analytics';
 import './App.css';
 
-export default function App() {
+function ConnectErrorBanner() {
+  const { connectError } = useWallet();
+  if (!connectError) return null;
+  return <div className="connect-error-banner">{connectError}</div>;
+}
+
+function Rexi() {
   const [page, setPage] = useState('Explore');
 
   const navigate = (target) => {
@@ -32,15 +37,21 @@ export default function App() {
   };
 
   return (
+    <div className="app">
+      <Navbar activePage={page} onNavigate={navigate} />
+      <ConnectErrorBanner />
+      <main className="main-content">
+        {renderPage()}
+      </main>
+      <Footer onNavigate={navigate} />
+    </div>
+  );
+}
+
+export default function App() {
+  return (
     <WalletProvider>
-      <div className="app">
-        <Navbar activePage={page} onNavigate={navigate} />
-        <main className="main-content">
-          {renderPage()}
-        </main>
-        <Footer onNavigate={navigate} />
-        <WalletModal />
-      </div>
+      <Rexi />
     </WalletProvider>
   );
 }

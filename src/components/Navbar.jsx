@@ -29,8 +29,8 @@ export default function Navbar({ activePage, onNavigate }) {
     connecting,
     walletAddress,
     shortAddress,
-    openModal,
-    disconnect
+    disconnect,
+    connect
   } = useWallet();
 
   return (
@@ -69,7 +69,7 @@ export default function Navbar({ activePage, onNavigate }) {
             <button
               className="btn-connect rh-connect-btn"
               disabled={connecting}
-              onClick={openModal}
+              onClick={connect}
             >
               <span className="rh-btn-icon">{RH_FEATHER_MINI}</span>
               <span>{connecting ? 'Connecting...' : 'Connect Wallet'}</span>
