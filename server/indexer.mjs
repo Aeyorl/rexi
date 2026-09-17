@@ -31,7 +31,7 @@ const desksTreasuryAbi = parseAbiItem('function desksTreasury() view returns (ad
 const buybackTreasuryAbi = parseAbiItem('function buybackTreasury() view returns (address)');
 
 // --- Network & Client Initialization ---
-const networkMode = process.env.NETWORK_MODE === 'mainnet' ? 'mainnet' : 'testnet';
+const networkMode = (process.env.NETWORK_MODE || 'mainnet').toLowerCase();
 const networkConfig = getNetworkConfig(networkMode);
 const canonicalLaunchpad = getCanonicalLaunchpad(networkMode);
 
@@ -59,10 +59,46 @@ const configuredStartBlock = networkMode === 'mainnet'
   ? BigInt(process.env.REXI_MAINNET_START_BLOCK || '65314300')
   : BigInt(process.env.REXI_TESTNET_START_BLOCK || '120290000');
 
-// Accumulated event logs across incremental sync cycles
-let accumulatedCreatedLogs = [];
-let accumulatedDistributedLogs = [];
-let accumulatedClaimedLogs = [];
+// Accumulated event logs across incremental sync cycles (seeded with Mainnet Genesis if in mainnet mode)
+let accumulatedCreatedLogs = networkMode === 'mainnet' ? [
+  {
+    eventName: 'LaunchCreated',
+    args: {
+      token: '0x65DaF75eef96316C5b38C8D928106Ea371D9a0fA',
+      rewardAsset: '0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73',
+      creator: '0x0183eb7aD3ac108F083f4905b5c85E0e1A5AFf5B',
+      supply: 1000000000000000000000000n
+    },
+    transactionHash: '0x01452de773fbd695f65344ce3f6bad7dc31c47331e4fa7de3057ca34c2d2ad87',
+    blockNumber: 65385305n
+  }
+] : [];
+
+let accumulatedDistributedLogs = networkMode === 'mainnet' ? [
+  {
+    eventName: 'RewardsDistributed',
+    args: {
+      token: '0x65DaF75eef96316C5b38C8D928106Ea371D9a0fA',
+      amount: 100000000000000n,
+      holderAmount: 67500000000000n
+    },
+    transactionHash: '0xf114f4e21064b78e8e3cd85090ef09ada35073a38652092155d943f984549b82',
+    blockNumber: 65388600n
+  }
+] : [];
+
+let accumulatedClaimedLogs = networkMode === 'mainnet' ? [
+  {
+    eventName: 'RewardClaimed',
+    args: {
+      token: '0x65DaF75eef96316C5b38C8D928106Ea371D9a0fA',
+      holder: '0x0183eb7aD3ac108F083f4905b5c85E0e1A5AFf5B',
+      amount: 67500000000000n
+    },
+    transactionHash: '0xbc8fa8870183354394019a8616fa1b131920b6e9275990529d4432a537f86445',
+    blockNumber: 65388650n
+  }
+] : [];
 
 // --- In-Memory State Cache ---
 let inMemoryState = {
