@@ -1,6 +1,43 @@
-# Rexi deployments — Robinhood Chain Testnet
+# Rexi Deployments
 
-Everything here is testnet-only. No mainnet deployment exists.
+## Robinhood Chain Mainnet (Live Production)
+
+| Setting | Value |
+| --- | --- |
+| Network | **Robinhood Chain Mainnet** |
+| Chain ID | `4663` (`0x1237`) |
+| Primary RPC | Alchemy Mainnet RPC (`https://robinhood-mainnet.g.alchemy.com/v2/...`) |
+| Fallback RPC | `https://rpc.chain.robinhood.com` |
+| Block Explorer | [`https://explorer.chain.robinhood.com`](https://explorer.chain.robinhood.com) |
+| Canonical Launchpad | [`0x011a50Bd4Ac29c90513728da693E69cAB678111e`](https://explorer.chain.robinhood.com/address/0x011a50Bd4Ac29c90513728da693E69cAB678111e) |
+| Deployment Block | `65303659` |
+| Deployment Tx | [`0xd36938865405dbc0dfdd4675a2a7117c8b50fa7ff09a492485080353958805bd`](https://explorer.chain.robinhood.com/tx/0xd36938865405dbc0dfdd4675a2a7117c8b50fa7ff09a492485080353958805bd) |
+| Deployer | `0xa1CdabD686B0e822b01F526363ff70385e7743a4` |
+
+### Configured Treasuries
+* **Protocol Treasury (5%)**: [`0xa5e7d6C189b37D9293908E0A28Da4D65d65a7f7A`](https://explorer.chain.robinhood.com/address/0xa5e7d6C189b37D9293908E0A28Da4D65d65a7f7A)
+* **Desks Treasury (10%)**: [`0x913B8D346625736958664C77b0C8Efd3DA2a7bA2`](https://explorer.chain.robinhood.com/address/0x913B8D346625736958664C77b0C8Efd3DA2a7bA2)
+* **Buyback Treasury (10%)**: [`0x8cA71B70C91BD8250073dfDD323b9219Bce6A165`](https://explorer.chain.robinhood.com/address/0x8cA71B70C91BD8250073dfDD323b9219Bce6A165)
+
+### Verified Canonical Mainnet Reward Assets
+| Asset | Name | Contract Address | Decimals |
+| :--- | :--- | :--- | :--- |
+| **$AAPL** | Apple • Robinhood Token | [`0xaF3D76f1834A1d425780943C99Ea8A608f8a93f9`](https://explorer.chain.robinhood.com/address/0xaF3D76f1834A1d425780943C99Ea8A608f8a93f9) | `18` |
+| **$TSLA** | Tesla • Robinhood Token | [`0x322F0929c4625eD5bAd873c95208D54E1c003b2d`](https://explorer.chain.robinhood.com/address/0x322F0929c4625eD5bAd873c95208D54E1c003b2d) | `18` |
+| **$WETH** | Wrapped Ether | [`0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73`](https://explorer.chain.robinhood.com/address/0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73) | `18` |
+| **$USDG** | Global Dollar (Paxos / Robinhood) | [`0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168`](https://explorer.chain.robinhood.com/address/0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168) | `6` |
+
+### Mainnet Genesis Launch & Live Evidence
+* **Genesis Token**: **`$OWEGO`** (OWEGO)
+* **Token Address**: [`0x65DaF75eef96316C5b38C8D928106Ea371D9a0fA`](https://explorer.chain.robinhood.com/address/0x65DaF75eef96316C5b38C8D928106Ea371D9a0fA)
+* **Supply**: `1,000,000 $OWEGO`
+* **Creation Tx**: [`0x01452de773fbd695f65344ce3f6bad7dc31c47331e4fa7de3057ca34c2d2ad87`](https://explorer.chain.robinhood.com/tx/0x01452de773fbd695f65344ce3f6bad7dc31c47331e4fa7de3057ca34c2d2ad87) (Block `65385305`)
+* **First Distribution Tx**: [`0xf114f4e21064b78e8e3cd85090ef09ada35073a38652092155d943f984549b82`](https://explorer.chain.robinhood.com/tx/0xf114f4e21064b78e8e3cd85090ef09ada35073a38652092155d943f984549b82) (Block `65388600`)
+* **Gross Distributed**: `0.0001 WETH` (67.5% directly to holders, 10% Desks, 10% Buybacks, 5% Protocol, 7.5% Ops)
+
+---
+
+## Robinhood Chain Testnet
 
 ## Network
 

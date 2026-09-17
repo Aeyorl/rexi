@@ -5,13 +5,12 @@ import {
   approveRewards,
   claimRewards,
   distributeRewards,
+  wrapEth,
   readHolderRewards,
   readRewardAssetState
 } from '../services/rexiChain';
-import { REXI_REWARD_ASSET, explorerTxUrl } from '../services/deployments';
+import { ACTIVE_REWARD_ASSET, ACTIVE_NETWORK, explorerTxUrl } from '../services/deployments';
 import './Rewards.css';
-
-const DISTRIBUTION_AMOUNT = 1000;
 
 export default function Rewards() {
   const { connected, connect, connecting, walletAddress, shortAddress } = useWallet();
@@ -21,12 +20,13 @@ export default function Rewards() {
   const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
   const [selectedToken, setSelectedToken] = useState(null);
+  const [distributeAmount, setDistributeAmount] = useState('0.0001');
 
   const [holderRewards, setHolderRewards] = useState(null);
   const [rewardAssetState, setRewardAssetState] = useState(null);
   const [readsError, setReadsError] = useState('');
 
-  const [action, setAction] = useState(null); // 'approving' | 'distributing' | 'claiming'
+  const [action, setAction] = useState(null); // 'approving' | 'distributing' | 'claiming' | 'wrapping'
   const [message, setMessage] = useState('');
   const [lastTx, setLastTx] = useState(null);
 
@@ -45,7 +45,7 @@ export default function Rewards() {
         setIndex(data);
         setLoadError('');
       } else {
-        setLoadError('Robinhood Chain index unavailable. The RPC may be rate limiting — retry shortly.');
+        setLoadError(`${ACTIVE_NETWORK.chainName} index unavailable. The RPC may be rate limiting — retry shortly.`);
       }
       setLoading(false);
     }
@@ -63,7 +63,7 @@ export default function Rewards() {
       try {
         const [rewards, assetState] = await Promise.all([
           readHolderRewards(selectedAddress, walletAddress, pad),
-          readRewardAssetState(walletAddress, selected?.rewardAsset || REXI_REWARD_ASSET, pad)
+          readRewardAssetState(walletAddress, selected?.rewardAsset || ACTIVE_REWARD_ASSET, pad)
         ]);
         if (!active) return;
         setHolderRewards(rewards);
@@ -96,16 +96,22 @@ export default function Rewards() {
 
   const rewardSymbol = selected?.rewardAssetSymbol || 'reward';
 
+  const handleWrap = () => runAction(
+    'wrapping',
+    () => wrapEth(distributeAmount, selected?.rewardAsset),
+    `Wrapped ${distributeAmount} ETH to ${rewardSymbol}.`
+  );
+
   const handleApprove = () => runAction(
     'approving',
-    () => approveRewards(DISTRIBUTION_AMOUNT, selected?.rewardAsset || REXI_REWARD_ASSET, selected?.launchpad),
-    `Approved ${selected?.legacy ? 'the legacy launchpad' : 'the launchpad'} to spend ${DISTRIBUTION_AMOUNT} ${rewardSymbol}.`
+    () => approveRewards(distributeAmount, selected?.rewardAsset || ACTIVE_REWARD_ASSET, selected?.launchpad),
+    `Approved ${selected?.legacy ? 'the legacy launchpad' : 'the launchpad'} to spend ${distributeAmount} ${rewardSymbol}.`
   );
 
   const handleDistribute = () => runAction(
     'distributing',
-    () => distributeRewards(selectedAddress, DISTRIBUTION_AMOUNT, selected?.rewardAsset || REXI_REWARD_ASSET, selected?.launchpad),
-    `Distributed ${DISTRIBUTION_AMOUNT} ${rewardSymbol} across ${selected?.symbol} holders.`
+    () => distributeRewards(selectedAddress, distributeAmount, selected?.rewardAsset || ACTIVE_REWARD_ASSET, selected?.launchpad),
+    `Distributed ${distributeAmount} ${rewardSymbol} across ${selected?.symbol} holders.`
   );
 
   const handleClaim = () => runAction(
@@ -125,7 +131,7 @@ export default function Rewards() {
         <p className="page-desc">
           Every coin launched here pays its holders. Fee inflows land in the launchpad, the holders' share
           accrues pro-rata against the launch token, and each holder claims it in the reward asset the
-          launcher chose. Everything below is read straight from Robinhood Chain Testnet.
+          launcher chose. Everything below is read straight from {ACTIVE_NETWORK.chainName}.
         </p>
       </div>
 
@@ -134,7 +140,7 @@ export default function Rewards() {
         <div className="user-rewards-active">
           <div className="user-rewards-left">
             <div className="user-pill-tag">
-              <span className="active-dot" /> Robinhood Chain Testnet · launchpad{' '}
+              <span className="active-dot" /> {ACTIVE_NETWORK.chainName} · launchpad{' '}
               <a className="tx-link" href={index?.launchpadUrl || '#'} target="_blank" rel="noreferrer">
                 {index?.launchpad ? `${index.launchpad.slice(0, 6)}…${index.launchpad.slice(-4)}` : 'unavailable'}
               </a>
@@ -208,7 +214,7 @@ export default function Rewards() {
                 Claim ${selected.symbol} rewards in {selected.rewardAssetSymbol || rewardSymbol}
               </span>
               <span className="prompt-desc">
-                Connect a wallet on Robinhood Chain Testnet to read your holding, your accrued rewards, and to claim.
+                Connect a wallet on {ACTIVE_NETWORK.chainName} to read your holding, your accrued rewards, and to claim.
               </span>
             </div>
             <button className="btn-connect-banner" disabled={connecting} onClick={connect}>
@@ -257,20 +263,59 @@ export default function Rewards() {
                 </div>
               )}
             </div>
-            <div className="user-rewards-right card-actions">
-              <button
-                className="btn-claim-rewards"
-                disabled={busy || !walletRewards?.claimable}
-                onClick={handleClaim}
-              >
-                {action === 'claiming' ? 'Claiming…' : `Claim ${rewardSymbol}`}
-              </button>
-              <button className="btn-outline" disabled={busy} onClick={handleApprove}>
-                {action === 'approving' ? 'Approving…' : `Approve ${DISTRIBUTION_AMOUNT} ${rewardSymbol}`}
-              </button>
-              <button className="btn-outline" disabled={busy} onClick={handleDistribute}>
-                {action === 'distributing' ? 'Distributing…' : `Distribute ${DISTRIBUTION_AMOUNT} ${rewardSymbol}`}
-              </button>
+            <div className="user-rewards-right card-actions" style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'flex-end' }}>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Amount:</span>
+                <input
+                  type="text"
+                  value={distributeAmount}
+                  onChange={e => setDistributeAmount(e.target.value)}
+                  style={{
+                    background: 'var(--bg-card)',
+                    border: '1px solid var(--border)',
+                    borderRadius: '6px',
+                    color: 'var(--text-primary)',
+                    padding: '5px 10px',
+                    fontSize: '12px',
+                    width: '95px'
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setDistributeAmount('0.0001')}
+                  style={{ background: 'transparent', border: '1px solid var(--border)', borderRadius: '4px', color: 'var(--text-secondary)', fontSize: '10px', padding: '3px 7px', cursor: 'pointer' }}
+                >
+                  0.0001
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDistributeAmount('0.001')}
+                  style={{ background: 'transparent', border: '1px solid var(--border)', borderRadius: '4px', color: 'var(--text-secondary)', fontSize: '10px', padding: '3px 7px', cursor: 'pointer' }}
+                >
+                  0.001
+                </button>
+              </div>
+
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                <button
+                  className="btn-claim-rewards"
+                  disabled={busy || !walletRewards?.claimable}
+                  onClick={handleClaim}
+                >
+                  {action === 'claiming' ? 'Claiming…' : `Claim ${rewardSymbol}`}
+                </button>
+                {rewardSymbol === 'WETH' && (
+                  <button className="btn-outline" disabled={busy} onClick={handleWrap}>
+                    {action === 'wrapping' ? 'Wrapping…' : `Wrap ${distributeAmount} ETH`}
+                  </button>
+                )}
+                <button className="btn-outline" disabled={busy} onClick={handleApprove}>
+                  {action === 'approving' ? 'Approving…' : `Approve ${distributeAmount} ${rewardSymbol}`}
+                </button>
+                <button className="btn-outline" disabled={busy} onClick={handleDistribute}>
+                  {action === 'distributing' ? 'Distributing…' : `Distribute ${distributeAmount} ${rewardSymbol}`}
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -338,7 +383,7 @@ export default function Rewards() {
       <div className="rewards-section">
         <div className="section-header">
           <h2>Recent distributions</h2>
-          <span className="section-sub">Live from Robinhood Chain Testnet, newest first</span>
+          <span className="section-sub">Live from {ACTIVE_NETWORK.chainName}, newest first</span>
         </div>
         <div className="recent-dist-list">
           {(index?.recentDistributions ?? []).length === 0 && (

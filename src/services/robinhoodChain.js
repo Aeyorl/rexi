@@ -1,12 +1,28 @@
 /**
- * Robinhood Chain Testnet configuration.
+ * Robinhood Chain configuration & wallet connection.
  *
- * Network details and addresses live in `deployments.js` so the frontend, the
- * API routes and the scripts cannot drift apart. This module re-exports them
- * under the names the app already imports.
+ * Automatically targets Robinhood Chain Mainnet or Testnet based on active configuration.
  */
-import { REXI_NETWORK, REXI_LAUNCHPAD, REXI_REWARD_ASSET, REXI_REWARD_ASSETS } from './deployments.js';
+import {
+  ACTIVE_NETWORK,
+  ACTIVE_LAUNCHPAD,
+  ACTIVE_REWARD_ASSET,
+  ACTIVE_REWARD_ASSETS,
+  REXI_NETWORK,
+  REXI_LAUNCHPAD,
+  REXI_REWARD_ASSET,
+  REXI_REWARD_ASSETS
+} from './deployments.js';
 export { explorerAddressUrl, explorerTxUrl, shortAddress } from './deployments.js';
+
+export const ACTIVE_CHAIN = {
+  chainId: ACTIVE_NETWORK.chainId,
+  chainIdDecimal: ACTIVE_NETWORK.chainIdDecimal,
+  chainName: ACTIVE_NETWORK.chainName,
+  nativeCurrency: ACTIVE_NETWORK.nativeCurrency,
+  rpcUrls: ACTIVE_NETWORK.rpcUrls,
+  blockExplorerUrls: ACTIVE_NETWORK.blockExplorerUrls
+};
 
 export const ROBINHOOD_CHAIN_TESTNET = {
   chainId: REXI_NETWORK.chainId,
@@ -17,18 +33,17 @@ export const ROBINHOOD_CHAIN_TESTNET = {
   blockExplorerUrls: REXI_NETWORK.blockExplorerUrls
 };
 
-/** Canonical RexiLaunchpad on Robinhood Chain Testnet. */
+/** Active RexiLaunchpad contract address. */
+export const ACTIVE_LAUNCHPAD_ADDRESS = ACTIVE_LAUNCHPAD;
 export const REXI_LAUNCHPAD_TESTNET = REXI_LAUNCHPAD;
 
-/** Default reward asset (testnet stand-in for a tokenised stock). */
-export const REXI_TEST_STOCK_TOKEN_TESTNET = REXI_REWARD_ASSET;
+/** Active reward assets list. */
+export const REXI_REWARD_ASSET_LIST = ACTIVE_REWARD_ASSETS;
+export const REXI_TEST_STOCK_TOKEN_TESTNET = ACTIVE_REWARD_ASSET;
 
-/** Every reward asset a launch may pay out with. */
-export const REXI_REWARD_ASSET_LIST = REXI_REWARD_ASSETS;
-
-/** Switches the injected wallet to Robinhood Chain, adding it only if needed. */
+/** Switches the injected wallet to the active Robinhood Chain, adding it only if needed. */
 async function ensureRobinhoodChain() {
-  const target = ROBINHOOD_CHAIN_TESTNET.chainId.toLowerCase();
+  const target = ACTIVE_CHAIN.chainId.toLowerCase();
 
   const whereAreWe = async () => {
     const current = await window.ethereum.request({ method: 'eth_chainId' });
@@ -38,7 +53,7 @@ async function ensureRobinhoodChain() {
   if ((await whereAreWe()) === target) return;
 
   try {
-    await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: ROBINHOOD_CHAIN_TESTNET.chainId }] });
+    await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: ACTIVE_CHAIN.chainId }] });
     if ((await whereAreWe()) === target) return;
   } catch {
     // 4902 means "unknown chain", but some wallets also throw other codes here
@@ -51,11 +66,11 @@ async function ensureRobinhoodChain() {
     await window.ethereum.request({
       method: 'wallet_addEthereumChain',
       params: [{
-        chainId: ROBINHOOD_CHAIN_TESTNET.chainId,
-        chainName: ROBINHOOD_CHAIN_TESTNET.chainName,
-        nativeCurrency: ROBINHOOD_CHAIN_TESTNET.nativeCurrency,
-        rpcUrls: ROBINHOOD_CHAIN_TESTNET.rpcUrls,
-        blockExplorerUrls: ROBINHOOD_CHAIN_TESTNET.blockExplorerUrls
+        chainId: ACTIVE_CHAIN.chainId,
+        chainName: ACTIVE_CHAIN.chainName,
+        nativeCurrency: ACTIVE_CHAIN.nativeCurrency,
+        rpcUrls: ACTIVE_CHAIN.rpcUrls,
+        blockExplorerUrls: ACTIVE_CHAIN.blockExplorerUrls
       }]
     });
   } catch {
@@ -64,14 +79,14 @@ async function ensureRobinhoodChain() {
   }
 
   if ((await whereAreWe()) === target) return;
-  await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: ROBINHOOD_CHAIN_TESTNET.chainId }] });
+  await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: ACTIVE_CHAIN.chainId }] });
   if ((await whereAreWe()) !== target) {
-    throw new Error(`Wallet did not switch to ${ROBINHOOD_CHAIN_TESTNET.chainName}. Switch to chain ${ROBINHOOD_CHAIN_TESTNET.chainIdDecimal} manually and reconnect.`);
+    throw new Error(`Wallet did not switch to ${ACTIVE_CHAIN.chainName}. Switch to chain ${ACTIVE_CHAIN.chainIdDecimal} manually and reconnect.`);
   }
 }
 
 export async function connectRobinhoodChain() {
-  if (!window.ethereum) throw new Error('Install an EVM wallet such as Robinhood Wallet to continue.');
+  if (!window.ethereum) throw new Error('Install an EVM wallet such as Robinhood Wallet or MetaMask to continue.');
   const [address] = await window.ethereum.request({ method: 'eth_requestAccounts' });
   await ensureRobinhoodChain();
   return address;

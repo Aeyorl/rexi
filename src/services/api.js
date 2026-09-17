@@ -5,7 +5,9 @@
  * (server/routes/chain.mjs). No simulated data lives here.
  */
 
-const API_BASE = '/api';
+const API_BASE = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL)
+  ? `${import.meta.env.VITE_API_URL.replace(/\/$/, '')}/api`
+  : '/api';
 
 /**
  * Full Robinhood Chain index: launches across every indexed launchpad,

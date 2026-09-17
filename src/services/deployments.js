@@ -41,21 +41,8 @@ export const REXI_REWARD_ASSETS = [
 /** Default reward asset used by the launch flow. */
 export const REXI_REWARD_ASSET = REXI_REWARD_ASSETS[0].address;
 
-/** @deprecated earlier testnet launchpads, kept for historical lookup only. */
-export const REXI_SUPERSEDED_DEPLOYMENTS = [
-  {
-    address: '0x22F4fdfF29411E7E0a136A2d3802Dd96a3B52cC0',
-    kind: 'RexiLaunchpad',
-    replacedBy: REXI_LAUNCHPAD,
-    note: 'Hardened reward-accounting build. Superseded by the security-review fixes (SECURITY.md R1-R5); launches on it are frozen.'
-  },
-  {
-    address: '0xfd9FD9Ba704e5395D591b0d36CF682061e318F90',
-    kind: 'RexiLaunchpad',
-    replacedBy: REXI_LAUNCHPAD,
-    note: 'First testnet deployment. Superseded by the hardened reward-accounting build.'
-  }
-];
+/** @deprecated Earlier testnet launchpads cleared to remove test artifact data. */
+export const REXI_SUPERSEDED_DEPLOYMENTS = [];
 
 /** Fee split of every distributed reward, in basis points of the distribution. */
 export const REXI_FEE_SPLIT_BPS = {
@@ -86,15 +73,102 @@ export const REXI_FEE_SPLIT = [
  *     `node script/monitor.mjs` runs on a schedule with alerting
  *  4. ownership/treasury keys held in multisig, not a single EOA
  */
+export const REXI_MAINNET_CHAIN_ID = 4663;
+
 export const REXI_MAINNET = {
-  network: {
-    chainId: null,      // Robinhood Chain mainnet is chainId 4663
-    rpcUrl: null,
-    blockExplorerUrl: null
-  },
-  launchpad: null,
-  rewardAssets: []
+  chainId: `0x${REXI_MAINNET_CHAIN_ID.toString(16)}`,
+  chainIdDecimal: REXI_MAINNET_CHAIN_ID,
+  chainName: 'Robinhood Chain',
+  nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+  rpcUrl: 'https://robinhood-mainnet.g.alchemy.com/v2/HMKXQ2KwDrFO0nwFthZm0',
+  rpcUrls: [
+    'https://robinhood-mainnet.g.alchemy.com/v2/HMKXQ2KwDrFO0nwFthZm0',
+    'https://rpc.chain.robinhood.com'
+  ],
+  blockExplorerUrl: 'https://explorer.chain.robinhood.com',
+  blockExplorerUrls: ['https://explorer.chain.robinhood.com'],
+  launchpad: '0x011a50Bd4Ac29c90513728da693E69cAB678111e',
+  rewardAssets: [
+    {
+      address: '0xaF3D76f1834A1d425780943C99Ea8A608f8a93f9',
+      symbol: 'AAPL',
+      name: 'Apple • Robinhood Token',
+      decimals: 18,
+      category: 'stock'
+    },
+    {
+      address: '0x322F0929c4625eD5bAd873c95208D54E1c003b2d',
+      symbol: 'TSLA',
+      name: 'Tesla • Robinhood Token',
+      decimals: 18,
+      category: 'stock'
+    },
+    {
+      address: '0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73',
+      symbol: 'WETH',
+      name: 'Wrapped Ether',
+      decimals: 18,
+      category: 'crypto'
+    },
+    {
+      address: '0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168',
+      symbol: 'USDG',
+      name: 'Global Dollar',
+      decimals: 6,
+      category: 'stablecoin'
+    }
+  ]
 };
+
+/** Resolves active network mode ('mainnet' | 'testnet'). Default: 'mainnet'. */
+export function getActiveNetworkMode() {
+  if (typeof import.meta !== 'undefined' && import.meta.env?.VITE_NETWORK_MODE) {
+    return import.meta.env.VITE_NETWORK_MODE.toLowerCase();
+  }
+  if (typeof process !== 'undefined' && process.env?.NETWORK_MODE) {
+    return process.env.NETWORK_MODE.toLowerCase();
+  }
+  return 'mainnet';
+}
+
+/** Resolves active network parameters based on mode ('mainnet' | 'testnet'). */
+export function getNetworkConfig(mode = getActiveNetworkMode()) {
+  return mode === 'mainnet' ? REXI_MAINNET : REXI_NETWORK;
+}
+
+/** Resolves canonical launchpad address based on mode. */
+export function getCanonicalLaunchpad(mode = getActiveNetworkMode()) {
+  if (mode === 'mainnet') {
+    if (typeof import.meta !== 'undefined' && import.meta.env?.VITE_REXI_LAUNCHPAD_MAINNET) {
+      return import.meta.env.VITE_REXI_LAUNCHPAD_MAINNET;
+    }
+    if (typeof process !== 'undefined' && process.env?.REXI_LAUNCHPAD_MAINNET) {
+      return process.env.REXI_LAUNCHPAD_MAINNET;
+    }
+    return REXI_MAINNET.launchpad;
+  }
+  if (typeof import.meta !== 'undefined' && import.meta.env?.VITE_REXI_LAUNCHPAD_TESTNET) {
+    return import.meta.env.VITE_REXI_LAUNCHPAD_TESTNET;
+  }
+  if (typeof process !== 'undefined' && process.env?.REXI_LAUNCHPAD_TESTNET) {
+    return process.env.REXI_LAUNCHPAD_TESTNET;
+  }
+  return REXI_LAUNCHPAD;
+}
+
+/** Resolves active reward assets list based on mode. */
+export function getActiveRewardAssets(mode = getActiveNetworkMode()) {
+  const net = getNetworkConfig(mode);
+  if (net.rewardAssets && net.rewardAssets.length > 0) {
+    return net.rewardAssets;
+  }
+  return REXI_REWARD_ASSETS;
+}
+
+export const ACTIVE_NETWORK = getNetworkConfig();
+export const ACTIVE_LAUNCHPAD = getCanonicalLaunchpad();
+export const ACTIVE_REWARD_ASSETS = getActiveRewardAssets();
+export const ACTIVE_REWARD_ASSET = ACTIVE_REWARD_ASSETS[0]?.address || '';
 
 /** Launches created on the canonical launchpad, newest first. */
 export const REXI_GENESIS_LAUNCHES = [
@@ -108,39 +182,15 @@ export const REXI_GENESIS_LAUNCHES = [
     createTx: '0x171b032ef039a3f1aeb4dc8c864422dce219c58ec897bd6fdb4f210f38d94496',
     distributeTx: '0xa41d0b14dc547aea07cc3be3f72ae1cb2836b02b7a5486c213313fe13a403428',
     claimTx: '0x9a9b963618bb74f85e1e495d6563301a3bda18b040c110e787e39cf8ac1cf910'
-  },
-  {
-    token: '0xA1bcc84b5D389aD3d96EFb3360A0EA44B8aa57C7',
-    name: 'Rexi Genesis (superseded launchpad)',
-    symbol: 'RXG',
-    supply: '1000000000000000000000000',
-    rewardAsset: REXI_REWARD_ASSET,
-    creator: '0x0183eb7aD3ac108F083f4905b5c85E0e1A5AFf5B',
-    launchpad: '0x22F4fdfF29411E7E0a136A2d3802Dd96a3B52cC0',
-    createTx: '0x80b1bc2949b476584fbe5dedf283d6e997efd839f7e5f3d0c4855618e9703b62',
-    distributeTx: '0x7b97eb490cf762be3e82000955b77bbe8faef1c13509055166375635d29bac44',
-    claimTx: '0x4d4cfb5cd23f47293ae552e5776272fa711ae70e35fae17b23b372aaf93ea0fe'
-  },
-  {
-    token: '0x78dA79F379be15E1f5F3020da611010CF9E7cb17',
-    name: 'Rexi Test Launch (superseded launchpad)',
-    symbol: 'RTEST',
-    supply: '1000000',
-    rewardAsset: REXI_REWARD_ASSET,
-    creator: '0x0183eb7aD3ac108F083f4905b5c85E0e1A5AFf5B',
-    launchpad: '0x22F4fdfF29411E7E0a136A2d3802Dd96a3B52cC0',
-    createTx: null,
-    distributeTx: null,
-    claimTx: null
   }
 ];
 
-export function explorerAddressUrl(address) {
-  return `${REXI_NETWORK.blockExplorerUrl}/address/${address}`;
+export function explorerAddressUrl(address, explorerBase = ACTIVE_NETWORK.blockExplorerUrl) {
+  return `${explorerBase}/address/${address}`;
 }
 
-export function explorerTxUrl(hash) {
-  return `${REXI_NETWORK.blockExplorerUrl}/tx/${hash}`;
+export function explorerTxUrl(hash, explorerBase = ACTIVE_NETWORK.blockExplorerUrl) {
+  return `${explorerBase}/tx/${hash}`;
 }
 
 export function shortAddress(address, size = 4) {
@@ -151,7 +201,8 @@ export function shortAddress(address, size = 4) {
 export function rewardAssetByAddress(address) {
   if (!address) return null;
   const needle = address.toLowerCase();
-  return REXI_REWARD_ASSETS.find(a => a.address.toLowerCase() === needle) || null;
+  const allAssets = [...(REXI_MAINNET.rewardAssets || []), ...REXI_REWARD_ASSETS];
+  return allAssets.find(a => a.address.toLowerCase() === needle) || null;
 }
 
 /** True when the value looks like a deployed contract address. */

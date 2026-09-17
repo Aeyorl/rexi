@@ -1,0 +1,11 @@
+.env
+.env.*
+node_modules
+dist
+.git
+.gitignore
+broadcast
+cache
+out
+script/*.ps1
+*.log

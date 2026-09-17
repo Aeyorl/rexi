@@ -9,20 +9,20 @@ import {
   parseUnits
 } from 'viem';
 import {
-  REXI_NETWORK,
-  REXI_LAUNCHPAD,
-  REXI_REWARD_ASSET,
+  ACTIVE_NETWORK,
+  ACTIVE_LAUNCHPAD,
+  ACTIVE_REWARD_ASSET,
   explorerAddressUrl,
   explorerTxUrl
 } from './deployments.js';
 import { connectRobinhoodChain } from './robinhoodChain.js';
 
 export const chain = {
-  id: REXI_NETWORK.chainIdDecimal,
-  name: REXI_NETWORK.chainName,
-  nativeCurrency: REXI_NETWORK.nativeCurrency,
-  rpcUrls: { default: { http: REXI_NETWORK.rpcUrls } },
-  blockExplorers: { default: { name: 'Robinhood Chain Explorer', url: REXI_NETWORK.blockExplorerUrl } }
+  id: ACTIVE_NETWORK.chainIdDecimal,
+  name: ACTIVE_NETWORK.chainName,
+  nativeCurrency: ACTIVE_NETWORK.nativeCurrency,
+  rpcUrls: { default: { http: ACTIVE_NETWORK.rpcUrls } },
+  blockExplorers: { default: { name: `${ACTIVE_NETWORK.chainName} Explorer`, url: ACTIVE_NETWORK.blockExplorerUrl } }
 };
 
 export const LAUNCHPAD_ABI = parseAbi([
@@ -56,7 +56,7 @@ let cachedPublicClient = null;
 
 export function publicClient() {
   if (!cachedPublicClient) {
-    cachedPublicClient = createPublicClient({ chain, transport: http(REXI_NETWORK.rpcUrl) });
+    cachedPublicClient = createPublicClient({ chain, transport: http(ACTIVE_NETWORK.rpcUrl) });
   }
   return cachedPublicClient;
 }
@@ -79,10 +79,11 @@ async function waitForReceipt(hash) {
  * Deploys a launch token through RexiLaunchpad.createLaunch and resolves the
  * address of the token that was created from the LaunchCreated event.
  */
-export async function createRexiLaunch({ name, symbol, rewardAsset = REXI_REWARD_ASSET, supply = 1000000 }) {
+export async function createRexiLaunch({ name, symbol, rewardAsset = ACTIVE_REWARD_ASSET, supply = 1000000, launchpad = ACTIVE_LAUNCHPAD }) {
+  if (!rewardAsset) throw new Error('No reward asset configured for this launch.');
   const { client, account } = await walletContext();
   const hash = await client.writeContract({
-    address: REXI_LAUNCHPAD,
+    address: launchpad,
     abi: LAUNCHPAD_ABI,
     functionName: 'createLaunch',
     account,
@@ -101,36 +102,53 @@ export async function createRexiLaunch({ name, symbol, rewardAsset = REXI_REWARD
   };
 }
 
+/** Wraps native ETH into canonical WETH. */
+export async function wrapEth(amount, wethAddress = '0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73') {
+  const { client, account } = await walletContext();
+  const hash = await client.sendTransaction({
+    to: wethAddress,
+    account,
+    value: parseUnits(String(amount), 18),
+    data: '0xd0e30db0' // deposit()
+  });
+  await waitForReceipt(hash);
+  return { hash, txUrl: explorerTxUrl(hash) };
+}
+
 /** Approves a launchpad to pull `amount` of a reward asset from the wallet. */
-export async function approveRewards(amount, asset = REXI_REWARD_ASSET, launchpad = REXI_LAUNCHPAD) {
+export async function approveRewards(amount, asset = ACTIVE_REWARD_ASSET, launchpad = ACTIVE_LAUNCHPAD) {
+  const pubClient = publicClient();
+  const decimals = await pubClient.readContract({ address: asset, abi: TOKEN_ABI, functionName: 'decimals' }).catch(() => 18);
   const { client, account } = await walletContext();
   const hash = await client.writeContract({
     address: asset,
     abi: TOKEN_ABI,
     functionName: 'approve',
     account,
-    args: [launchpad, parseUnits(String(amount), 18)]
+    args: [launchpad, parseUnits(String(amount), decimals)]
   });
   await waitForReceipt(hash);
   return { hash, launchpad, txUrl: explorerTxUrl(hash) };
 }
 
 /** Distributes a reward asset to every holder of `token` (67.5% to holders). */
-export async function distributeRewards(token, amount, asset = REXI_REWARD_ASSET, launchpad = REXI_LAUNCHPAD) {
+export async function distributeRewards(token, amount, asset = ACTIVE_REWARD_ASSET, launchpad = ACTIVE_LAUNCHPAD) {
+  const pubClient = publicClient();
+  const decimals = await pubClient.readContract({ address: asset, abi: TOKEN_ABI, functionName: 'decimals' }).catch(() => 18);
   const { client, account } = await walletContext();
   const hash = await client.writeContract({
     address: launchpad,
     abi: LAUNCHPAD_ABI,
     functionName: 'distribute',
     account,
-    args: [token, parseUnits(String(amount), 18)]
+    args: [token, parseUnits(String(amount), decimals)]
   });
   await waitForReceipt(hash);
   return { hash, account, asset, launchpad, txUrl: explorerTxUrl(hash) };
 }
 
 /** Claims the caller's accrued rewards for `token` on its own launchpad. */
-export async function claimRewards(token, launchpad = REXI_LAUNCHPAD) {
+export async function claimRewards(token, launchpad = ACTIVE_LAUNCHPAD) {
   const { client, account } = await walletContext();
   const hash = await client.writeContract({
     address: launchpad,
@@ -164,7 +182,7 @@ export async function readTokenInfo(token) {
   };
 }
 
-export async function readLaunch(token, launchpad = REXI_LAUNCHPAD) {
+export async function readLaunch(token, launchpad = ACTIVE_LAUNCHPAD) {
   const client = publicClient();
   const [launch, info] = await Promise.all([
     client.readContract({ address: launchpad, abi: LAUNCHPAD_ABI, functionName: 'launches', args: [token] }),
@@ -189,7 +207,7 @@ export async function readLaunch(token, launchpad = REXI_LAUNCHPAD) {
  * Mirrors the on-chain claim maths: accrued = balance * accRewardPerToken / ACC_SCALE.
  * `pending` is exactly what `claim()` would pay out right now.
  */
-export async function readHolderRewards(token, account, launchpad = REXI_LAUNCHPAD) {
+export async function readHolderRewards(token, account, launchpad = ACTIVE_LAUNCHPAD) {
   if (!account) return null;
   const client = publicClient();
   const [launch, balance, debt] = await Promise.all([
@@ -213,8 +231,8 @@ export async function readHolderRewards(token, account, launchpad = REXI_LAUNCHP
 }
 
 /** Reward-asset balance and launchpad allowance for the connected wallet. */
-export async function readRewardAssetState(account, asset = REXI_REWARD_ASSET, launchpad = REXI_LAUNCHPAD) {
-  if (!account) return null;
+export async function readRewardAssetState(account, asset = ACTIVE_REWARD_ASSET, launchpad = ACTIVE_LAUNCHPAD) {
+  if (!account || !asset) return null;
   const client = publicClient();
   const [balance, allowance, symbol] = await Promise.all([
     client.readContract({ address: asset, abi: TOKEN_ABI, functionName: 'balanceOf', args: [account] }),
@@ -233,7 +251,7 @@ export async function readRewardAssetState(account, asset = REXI_REWARD_ASSET, l
 }
 
 /** Launchpad constants read from the deployed contract, so the UI never guesses. */
-export async function readLaunchpadConfig(launchpad = REXI_LAUNCHPAD) {
+export async function readLaunchpadConfig(launchpad = ACTIVE_LAUNCHPAD) {
   const client = publicClient();
   const [bps, holderShare, accScale] = await Promise.all([
     client.readContract({ address: launchpad, abi: LAUNCHPAD_ABI, functionName: 'BPS' }),

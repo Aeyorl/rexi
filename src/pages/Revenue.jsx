@@ -22,7 +22,17 @@ export default function Revenue() {
   }, []);
 
   const totals = activity?.totals;
-  const symbol = activity?.totals?.assets?.[0]?.symbol || 'reward';
+  const symbol = activity?.byAsset?.[0]?.symbol || activity?.totals?.assets?.[0]?.symbol || 'WETH';
+
+  function formatCryptoAmount(num) {
+    if (num === null || num === undefined) return '0';
+    const val = Number(num);
+    if (isNaN(val)) return String(num);
+    if (val === 0) return '0';
+    if (val < 0.001) return val.toFixed(7).replace(/0+$/, '').replace(/\.$/, '');
+    return val.toLocaleString('en-US', { maximumFractionDigits: 4 });
+  }
+
   const rows = totals ? [
     { label: 'Holders (67.5%)', value: Number(totals.holders), sub: 'Reward asset paid to launch-token holders' },
     { label: 'Desks (10%)', value: Number(totals.desks), sub: `Desks treasury across ${activity.treasuries.filter(t => t.role === 'desks' && !t.legacy).length} live launchpad(s)` },
@@ -42,14 +52,14 @@ export default function Revenue() {
         <div className="rev-stat">
           <div className="rev-stat-label">DISTRIBUTED, ALL TIME</div>
           <div className="rev-stat-val">
-            {totals ? `${Number(totals.distributed).toLocaleString('en-US')} ${symbol}` : '—'}
+            {totals ? `${formatCryptoAmount(totals.distributed)} ${symbol}` : '—'}
           </div>
           <div className="rev-stat-sub">{loading ? 'Reading chain…' : `${totals?.distributions ?? 0} distributions indexed`}</div>
         </div>
         <div className="rev-stat">
           <div className="rev-stat-label">PAID TO HOLDERS</div>
           <div className="rev-stat-val green">
-            {totals ? `${Number(totals.holders).toLocaleString('en-US')} ${symbol}` : '—'}
+            {totals ? `${formatCryptoAmount(totals.holders)} ${symbol}` : '—'}
           </div>
           <div className="rev-stat-sub">67.5% of every distribution</div>
         </div>
@@ -57,7 +67,7 @@ export default function Revenue() {
           <div className="rev-stat-label">FEES, ALL TIME</div>
           <div className="rev-stat-val">
             {totals
-              ? `${(Number(totals.protocol) + Number(totals.desks) + Number(totals.buybacks) + Number(totals.platformOps)).toLocaleString('en-US')} ${symbol}`
+              ? `${formatCryptoAmount(Number(totals.protocol) + Number(totals.desks) + Number(totals.buybacks) + Number(totals.platformOps))} ${symbol}`
               : '—'}
           </div>
           <div className="rev-stat-sub">Protocol + desks + buybacks + operations</div>
@@ -76,7 +86,7 @@ export default function Revenue() {
             <div className="rev-row-bar-wrap">
               <div className="rev-row-bar" style={{ width: `${(row.value / maxRow) * 100}%` }} />
             </div>
-            <div className="rev-row-val">{row.value.toLocaleString('en-US')} {symbol}</div>
+            <div className="rev-row-val">{formatCryptoAmount(row.value)} {symbol}</div>
           </div>
         ))}
       </div>
@@ -93,7 +103,7 @@ export default function Revenue() {
               <span className="rev-row-sub">{t.address.slice(0, 10)}…{t.address.slice(-6)}</span>
             </div>
             <div className="rev-row-val">
-              {t.balances.map(b => `${Number(b.formatted).toLocaleString('en-US')} ${b.symbol}`).join(' · ') || '—'}
+              {t.balances.map(b => `${formatCryptoAmount(b.formatted)} ${b.symbol}`).join(' · ') || '—'}
             </div>
           </div>
         ))}

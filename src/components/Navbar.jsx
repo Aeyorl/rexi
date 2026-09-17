@@ -4,7 +4,7 @@
 // the chain explorer.
 import { useState } from 'react';
 import { useWallet } from '../context/WalletContext';
-import { REXI_NETWORK, explorerAddressUrl } from '../services/deployments';
+import { ACTIVE_NETWORK, explorerAddressUrl } from '../services/deployments';
 import './Navbar.css';
 
 const NAV_ITEMS = ['Explore', 'Launch token', 'Rewards', 'Revenue', 'Desks', 'Analytics'];
@@ -81,7 +81,7 @@ export default function Navbar({ activePage, onNavigate }) {
                 href={explorerAddressUrl(walletAddress)}
                 target="_blank"
                 rel="noreferrer"
-                title={`${walletAddress} · ${REXI_NETWORK.chainName}`}
+                title={`${walletAddress} · ${ACTIVE_NETWORK.chainName}`}
               >
                 <span className="rh-feather-badge">{RH_FEATHER_MINI}</span>
                 <span className="wallet-pill-addr">{shortAddress || walletAddress}</span>

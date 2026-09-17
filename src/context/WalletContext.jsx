@@ -5,7 +5,7 @@
 // show it inline. A hung or popup-blocked wallet request times out instead of
 // leaving the page spinning forever.
 import { createContext, useContext, useState } from 'react';
-import { connectRobinhoodChain, ROBINHOOD_CHAIN_TESTNET } from '../services/robinhoodChain';
+import { connectRobinhoodChain, ACTIVE_CHAIN } from '../services/robinhoodChain';
 import { shortAddress as formatShortAddress } from '../services/deployments';
 
 const WalletContext = createContext(null);
@@ -62,7 +62,7 @@ export function WalletProvider({ children }) {
       localStorage.setItem(REXI_SESSION_KEY, JSON.stringify({
         connected: true,
         walletAddress: address,
-        chainId: ROBINHOOD_CHAIN_TESTNET.chainIdDecimal
+        chainId: ACTIVE_CHAIN.chainIdDecimal
       }));
       return address;
     } catch (err) {
@@ -87,8 +87,8 @@ export function WalletProvider({ children }) {
       connectError,
       walletAddress,
       shortAddress,
-      chainId: ROBINHOOD_CHAIN_TESTNET.chainIdDecimal,
-      chainName: ROBINHOOD_CHAIN_TESTNET.chainName,
+      chainId: ACTIVE_CHAIN.chainIdDecimal,
+      chainName: ACTIVE_CHAIN.chainName,
       connect,
       disconnect
     }}>

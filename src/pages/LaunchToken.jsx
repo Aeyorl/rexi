@@ -2,11 +2,13 @@ import { useState } from 'react';
 import { useWallet } from '../context/WalletContext';
 import { createRexiLaunch } from '../services/rexiChain';
 import {
-  REXI_REWARD_ASSET,
-  REXI_REWARD_ASSETS,
+  ACTIVE_NETWORK,
+  ACTIVE_LAUNCHPAD,
+  ACTIVE_REWARD_ASSET,
+  ACTIVE_REWARD_ASSETS,
   REXI_FEE_SPLIT,
-  REXI_LAUNCHPAD,
-  explorerAddressUrl
+  explorerAddressUrl,
+  isAddress
 } from '../services/deployments';
 import './LaunchToken.css';
 
@@ -19,7 +21,7 @@ export default function LaunchToken() {
   const [description, setDescription] = useState('');
   const [xLink, setXLink] = useState('');
   const [supply, setSupply] = useState(DEFAULT_SUPPLY);
-  const [rewardAsset, setRewardAsset] = useState(REXI_REWARD_ASSET);
+  const [rewardAsset, setRewardAsset] = useState(ACTIVE_REWARD_ASSET);
   const [imageFile, setImageFile] = useState(null);
   const [launchStatus, setLaunchStatus] = useState(null); // 'signing' | 'deploying' | 'success'
   const [launchError, setLaunchError] = useState('');
@@ -32,6 +34,10 @@ export default function LaunchToken() {
     }
     if (!/^[1-9][0-9]*$/.test(supply)) {
       setLaunchError('Enter a whole-number supply greater than zero.');
+      return;
+    }
+    if (!rewardAsset || !isAddress(rewardAsset)) {
+      setLaunchError('Please select or specify a valid ERC-20 reward asset address on Robinhood Chain.');
       return;
     }
     setLaunchError('');
@@ -49,9 +55,8 @@ export default function LaunchToken() {
     }
   };
 
-  // The split the deployed launchpad actually applies (REXI_FEE_SPLIT in deployments.js).
   const feeBreakdown = REXI_FEE_SPLIT;
-  const rewardAssetInfo = REXI_REWARD_ASSETS.find(a => a.address === rewardAsset) || REXI_REWARD_ASSETS[0];
+  const rewardAssetInfo = ACTIVE_REWARD_ASSETS.find(a => a.address?.toLowerCase() === rewardAsset?.toLowerCase()) || (rewardAsset ? { symbol: 'Reward Asset', address: rewardAsset } : null);
 
   return (
     <div className="launch-token">
@@ -164,32 +169,45 @@ export default function LaunchToken() {
       <div className="form-section">
         <label className="section-label">REWARD ASSET</label>
         <p className="section-desc">
-          A real ERC-20 on Robinhood Chain that holders are paid in. On testnet the only deployed
-          reward asset is the Rexi stand-in below.
+          A real ERC-20 on {ACTIVE_NETWORK.chainName} that holders are paid in.
         </p>
-        <div className="reward-asset-row">
-          {REXI_REWARD_ASSETS.map(asset => (
-            <button
-              key={asset.address}
-              className={`reward-asset-btn ${rewardAsset === asset.address ? 'active' : ''}`}
-              onClick={() => setRewardAsset(asset.address)}
-            >
-              <span className="reward-asset-symbol">{asset.symbol}</span>
-              <span className="reward-asset-name">
-                {asset.name}{asset.testnetOnly ? ' · testnet' : ''}
-              </span>
-              <span className="reward-asset-addr">
-                <a
-                  href={explorerAddressUrl(asset.address)}
-                  target="_blank"
-                  rel="noreferrer"
-                  onClick={e => e.stopPropagation()}
-                >
-                  {asset.address.slice(0, 10)}…{asset.address.slice(-6)}
-                </a>
-              </span>
-            </button>
-          ))}
+        {ACTIVE_REWARD_ASSETS.length > 0 ? (
+          <div className="reward-asset-row">
+            {ACTIVE_REWARD_ASSETS.map(asset => (
+              <button
+                key={asset.address}
+                type="button"
+                className={`reward-asset-btn ${rewardAsset?.toLowerCase() === asset.address.toLowerCase() ? 'active' : ''}`}
+                onClick={() => setRewardAsset(asset.address)}
+              >
+                <span className="reward-asset-symbol">{asset.symbol}</span>
+                <span className="reward-asset-name">
+                  {asset.name}{asset.testnetOnly ? ' · testnet' : ''}
+                </span>
+                <span className="reward-asset-addr">
+                  <a
+                    href={explorerAddressUrl(asset.address)}
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={e => e.stopPropagation()}
+                  >
+                    {asset.address.slice(0, 10)}…{asset.address.slice(-6)}
+                  </a>
+                </span>
+              </button>
+            ))}
+          </div>
+        ) : null}
+        <div style={{ marginTop: '14px' }}>
+          <label style={{ fontSize: '11px', color: '#999', display: 'block', marginBottom: '6px', letterSpacing: '0.5px' }}>
+            {ACTIVE_REWARD_ASSETS.length > 0 ? 'OR SPECIFY CUSTOM REWARD ASSET (ERC-20 ADDRESS)' : 'REWARD ASSET CONTRACT ADDRESS (ERC-20)'}
+          </label>
+          <input
+            className="form-input"
+            placeholder="0x... (ERC-20 Token Contract Address)"
+            value={rewardAsset}
+            onChange={e => setRewardAsset(e.target.value.trim())}
+          />
         </div>
       </div>
 
@@ -215,20 +233,20 @@ export default function LaunchToken() {
         <div className="summary-rows">
           <div className="summary-row">
             <span>Launching on</span>
-            <span>Robinhood Chain Testnet</span>
+            <span>{ACTIVE_NETWORK.chainName}</span>
           </div>
           <div className="summary-row">
             <span>Launchpad</span>
             <span className="pair-val">
-              <a href={explorerAddressUrl(REXI_LAUNCHPAD)} target="_blank" rel="noreferrer">
-                {REXI_LAUNCHPAD.slice(0, 8)}…{REXI_LAUNCHPAD.slice(-6)}
+              <a href={explorerAddressUrl(ACTIVE_LAUNCHPAD)} target="_blank" rel="noreferrer">
+                {ACTIVE_LAUNCHPAD ? `${ACTIVE_LAUNCHPAD.slice(0, 8)}…${ACTIVE_LAUNCHPAD.slice(-6)}` : '—'}
               </a>
             </span>
           </div>
           <div className="summary-row">
             <span>Holders are paid in</span>
             <span className="pair-val">
-              <span className="pair-dot">⬛</span> {rewardAssetInfo?.symbol}
+              <span className="pair-dot">⬛</span> {rewardAssetInfo?.symbol || (rewardAsset ? `${rewardAsset.slice(0, 6)}…${rewardAsset.slice(-4)}` : 'None')}
             </span>
           </div>
           <div className="summary-row">
@@ -270,8 +288,8 @@ export default function LaunchToken() {
           <div className="launch-success-banner">
             <span className="success-icon">🎉</span>
             <div className="success-text">
-              <strong>${ticker} deployed on Robinhood Chain Testnet</strong>
-              <span>Holders now accrue {rewardAssetInfo?.symbol || selectedPair} rewards, pro-rata to their balance.</span>
+              <strong>${ticker} deployed on {ACTIVE_NETWORK.chainName}</strong>
+              <span>Holders now accrue {rewardAssetInfo?.symbol || 'rewards'}, pro-rata to their balance.</span>
               {createdLaunch?.token && (
                 <span>
                   Token{' '}
