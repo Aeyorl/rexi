@@ -13,6 +13,9 @@
 | Deployment Block | `65303659` |
 | Deployment Tx | [`0xd36938865405dbc0dfdd4675a2a7117c8b50fa7ff09a492485080353958805bd`](https://explorer.chain.robinhood.com/tx/0xd36938865405dbc0dfdd4675a2a7117c8b50fa7ff09a492485080353958805bd) |
 | Deployer | `0xa1CdabD686B0e822b01F526363ff70385e7743a4` |
+| **Production Frontend & API** | [`https://rexi-launchpad.vercel.app`](https://rexi-launchpad.vercel.app) |
+| **Live Mainnet API Health** | [`https://rexi-launchpad.vercel.app/api/health`](https://rexi-launchpad.vercel.app/api/health) |
+| **Live Mainnet Launches API** | [`https://rexi-launchpad.vercel.app/api/chain/launches`](https://rexi-launchpad.vercel.app/api/chain/launches) |
 
 ### Configured Treasuries
 * **Protocol Treasury (5%)**: [`0xa5e7d6C189b37D9293908E0A28Da4D65d65a7f7A`](https://explorer.chain.robinhood.com/address/0xa5e7d6C189b37D9293908E0A28Da4D65d65a7f7A)
