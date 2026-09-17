@@ -1,66 +1,81 @@
-# Rexi
+# Rexi — Robinhood Chain Token Launchpad
 
-Robinhood-first token launchpad, live on Robinhood Chain Testnet:
-<https://rexi-launchpad.vercel.app>
+> **Live in Production on Robinhood Chain Mainnet (`Chain ID: 4663`)**: [https://rexi-launchpad.vercel.app](https://rexi-launchpad.vercel.app)
 
-Launch a token, fund it with a reward asset, and every holder accrues that reward
-pro-rata to their balance and claims it whenever they like.
-
-## Running locally
-
-```sh
-npm install
-npm run server   # backend API on http://localhost:4000
-npm run dev      # frontend on http://localhost:5173, proxies /api to the backend
-```
-
-## Chain integration
-
-- Canonical testnet addresses, live transactions and the verification recipe:
-  [`DEPLOYMENTS.md`](DEPLOYMENTS.md)
-- Contract source and build notes: [`contracts/README.md`](contracts/README.md)
-- Shared address/config module: [`src/services/deployments.js`](src/services/deployments.js)
-
-Frontend wiring lives in [`src/services/rexiChain.js`](src/services/rexiChain.js)
-(writes + reads) and [`server/routes/chain.mjs`](server/routes/chain.mjs) (event
-index used by the Explore and Rewards pages).
-
-## Verifying the deployment
-
-```powershell
-powershell -ExecutionPolicy Bypass -File script/verify-deployment.ps1   # bytecode matches source
-node script/check-reads.mjs                                            # live state vs frontend reads
-```
-
-## Deploying the contract
-
-Copy `.env.example` to `.env`, set the three treasury addresses and a funded
-throwaway testnet `PRIVATE_KEY`, then run `script/deploy-testnet.ps1`. Never
-commit a private key.
-
-## Status
-
-Testnet only. The reward accounting has been internally reviewed — findings and
-residual limitations in [`SECURITY.md`](SECURITY.md), fixed and covered by
-`forge test --match-contract RexiLaunchpadSecurityTest`. Mainnet is out of scope
-until an independent audit passes.
+**Rexi** is a token launchpad purpose-built for Robinhood Chain. Creators launch ERC-20 tokens backed by real-world and crypto reward dividends (**Apple Stock $AAPL**, **Tesla Stock $TSLA**, **Wrapped Ether $WETH**, or **Global Dollar $USDG**). Holders continuously accrue rewards pro-rata to their holdings without locking or staking.
 
 ---
 
-This project is a Vite + React template. For the template documentation
-(plugins, React Compiler, lint rules) see the sections below.
+## ⚡ Quick Links & Documentation
+* 📖 **[Full Technical & Operational Documentation](DOCUMENTATION.md)** — Complete architecture, dividend math, and contract mechanics.
+* 📜 **[Deployments & On-Chain Proofs](DEPLOYMENTS.md)** — Mainnet & testnet contract addresses, transaction hashes, and verified treasuries.
+* 🛡️ **[Security Model & Invariants](SECURITY.md)** — Reentrancy guards, transfer-hook verifications, and audit status.
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+---
 
-Currently, two official plugins are available:
+## 💎 Canonical Mainnet Deployments
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+| Component | Address / Link |
+| :--- | :--- |
+| **Network** | **Robinhood Chain Mainnet** (`Chain ID: 4663`) |
+| **Live App** | [https://rexi-launchpad.vercel.app](https://rexi-launchpad.vercel.app) |
+| **Canonical Launchpad** | [`0x011a50Bd4Ac29c90513728da693E69cAB678111e`](https://explorer.chain.robinhood.com/address/0x011a50Bd4Ac29c90513728da693E69cAB678111e) |
+| **Genesis Token ($OWEGO)** | [`0x65DaF75eef96316C5b38C8D928106Ea371D9a0fA`](https://explorer.chain.robinhood.com/address/0x65DaF75eef96316C5b38C8D928106Ea371D9a0fA) |
+| **Protocol Treasury** | [`0xa5e7d6C189b37D9293908E0A28Da4D65d65a7f7A`](https://explorer.chain.robinhood.com/address/0xa5e7d6C189b37D9293908E0A28Da4D65d65a7f7A) |
+| **Desks Treasury** | [`0x913B8D346625736958664C77b0C8Efd3DA2a7bA2`](https://explorer.chain.robinhood.com/address/0x913B8D346625736958664C77b0C8Efd3DA2a7bA2) |
+| **Buyback Treasury** | [`0x8cA71B70C91BD8250073dfDD323b9219Bce6A165`](https://explorer.chain.robinhood.com/address/0x8cA71B70C91BD8250073dfDD323b9219Bce6A165) |
 
-## React Compiler
+### Supported Reward Assets
+* **$AAPL** — `0xaF3D76f1834A1d425780943C99Ea8A608f8a93f9` (18 decimals)
+* **$TSLA** — `0x322F0929c4625eD5bAd873c95208D54E1c003b2d` (18 decimals)
+* **$WETH** — `0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73` (18 decimals)
+* **$USDG** — `0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168` (6 decimals)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the Oxlint configuration
+## 💰 Fee Split Distribution
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+Every reward deposit into `RexiLaunchpad.distribute()` splits automatically:
+* **67.5%** — Pro-rata dividend pool for token holders
+* **10.0%** — Desks Treasury
+* **10.0%** — Rexi Buyback Treasury
+* **5.0%** — Protocol Treasury
+* **7.5%** — Platform Operations & Retained Buffer
+
+---
+
+## 🚀 Running Locally
+
+```bash
+# 1. Install dependencies
+npm install
+
+# 2. Run backend API indexer (port 4000)
+npm run server
+
+# 3. Run frontend with Vite HMR (port 5173)
+npm run dev
+```
+
+---
+
+## 📡 Live Production API
+
+Unified serverless Express endpoints available at `https://rexi-launchpad.vercel.app`:
+* `GET /api/health` — Service status, active chain ID, and canonical launchpad address.
+* `GET /api/chain/launches` — Real-time catalog of all token launches and reward totals.
+* `GET /api/chain/launches/:token` — Single token detail and historical payouts.
+* `GET /api/chain/activity` — Cumulative financial ledger and treasury balances.
+* `GET /api/chain/health` — On-chain invariant solvency validation.
+
+---
+
+## 🧪 Smart Contract Verification & Testing
+
+```powershell
+# Run security test suite covering R1-R5 invariants
+forge test --match-contract RexiLaunchpadSecurityTest -vvv
+
+# Verify local bytecode matches Robinhood Chain deployment
+powershell -ExecutionPolicy Bypass -File script/verify-deployment.ps1
+```
