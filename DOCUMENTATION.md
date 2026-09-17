@@ -1,6 +1,6 @@
-# Rexi Protocol — Technical & Operational Documentation
+# Bool Protocol — Technical & Operational Documentation
 
-Welcome to the comprehensive technical documentation for **Rexi**, a token launchpad purpose-built for the **Robinhood Chain Mainnet** (`Chain ID: 4663`).
+Welcome to the comprehensive technical documentation for **Bool**, a token launchpad purpose-built for the **Robinhood Chain Mainnet** (`Chain ID: 4663`).
 
 ---
 
@@ -20,7 +20,7 @@ Welcome to the comprehensive technical documentation for **Rexi**, a token launc
 
 ## 1. Executive Summary
 
-Rexi enables anyone to launch an ERC-20 token whose holders continuously accrue real-world and crypto dividends (such as **Apple Stock**, **Tesla Stock**, **Wrapped Ether**, or **Global Dollar**). 
+Bool enables anyone to launch an ERC-20 token whose holders continuously accrue real-world and crypto dividends (such as **Apple Stock**, **Tesla Stock**, **Wrapped Ether**, or **Global Dollar**). 
 
 ### Core Value Proposition
 - **Passive Dividend Yield**: Holders don't need to stake or lock tokens. Holding the token automatically entitles them to proportional reward payouts.
@@ -87,13 +87,13 @@ graph TD
 
 ## 4. Token & Dividend Economics
 
-Whenever any creator or project distributes reward tokens (e.g. $WETH, $AAPL, or $USDG) into a Rexi launch, the protocol automatically routes the funds according to fixed basis points:
+Whenever any creator or project distributes reward tokens (e.g. $WETH, $AAPL, or $USDG) into a Bool launch, the protocol automatically routes the funds according to fixed basis points:
 
 ```
 Total Reward Distribution (100% / 10,000 bps)
 ├── 67.50% (6,750 bps) ──> Token Holders (Pro-rata dividend claim pool)
 ├── 10.00% (1,000 bps) ──> Desks Treasury
-├── 10.00% (1,000 bps) ──> Buyback Treasury
+├── 10.00% (1,000 bps) ──> Bool Buyback Treasury
 ├──  5.00%   (500 bps) ──> Protocol Treasury
 └──  7.50%   (750 bps) ──> Platform Operations / Retained Buffer
 ```
@@ -162,7 +162,7 @@ Production Base URL: `https://rexi-launchpad.vercel.app`
 ```json
 {
   "status": "ok",
-  "service": "Rexi Robinhood Backend API",
+  "service": "Bool Robinhood Backend API",
   "network": "mainnet",
   "chainId": 4663,
   "launchpad": "0x011a50Bd4Ac29c90513728da693E69cAB678111e",

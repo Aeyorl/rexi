@@ -14,7 +14,7 @@ export default function Footer({ onNavigate }) {
               <rect x="6" y="14" width="8" height="1.5" rx="0.75" fill="currentColor"/>
               <rect x="4" y="16.5" width="12" height="1" rx="0.5" fill="currentColor" opacity="0.5"/>
             </svg>
-            <span>REXI</span>
+            <span>BOOL</span>
           </div>
           <p className="footer-tagline">Launch assets. Earn stocks.</p>
         </div>

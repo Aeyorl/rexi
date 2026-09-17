@@ -48,6 +48,7 @@ export default function Navbar({ activePage, onNavigate }) {
               <rect x="4" y="16.5" width="12" height="1" rx="0.5" fill="currentColor" opacity="0.5"/>
             </svg>
           </div>
+          <span className="logo-brand">Bool</span>
         </button>
 
         {/* Links */}

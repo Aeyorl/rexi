@@ -51,7 +51,7 @@ export default function LaunchToken() {
       setLaunchStatus('success');
     } catch (err) {
       setLaunchStatus(null);
-      setLaunchError(err.shortMessage || err.message || 'Launch failed. Check the Rexi service and try again.');
+      setLaunchError(err.shortMessage || err.message || 'Launch failed. Check the Bool service and try again.');
     }
   };
 
@@ -65,7 +65,7 @@ export default function LaunchToken() {
       {/* Launch On */}
       <div className="form-section">
         <label className="section-label">LAUNCH ON</label>
-        <div className="platform-row"><div className="platform-btn active"><span className="platform-icon">🟢</span> Rexi · Robinhood</div></div>
+        <div className="platform-row"><div className="platform-btn active"><span className="platform-icon">🟢</span> Bool · Robinhood</div></div>
       </div>
 
       {/* Token Details */}

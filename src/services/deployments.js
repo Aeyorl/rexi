@@ -57,7 +57,7 @@ export const REXI_FEE_SPLIT = [
   { label: 'Holders, in the reward asset', value: '67.5%' },
   { label: 'Desks', value: '10%' },
   { label: 'Protocol', value: '5%' },
-  { label: 'Rexi buybacks', value: '10%' },
+  { label: 'Bool buybacks', value: '10%' },
   { label: 'Platform operations', value: '7.5%' }
 ];
 

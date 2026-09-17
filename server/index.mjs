@@ -33,7 +33,7 @@ app.get('/api/health', (_req, res) => {
   const sync = getSyncStatus();
   res.json({
     status: 'ok',
-    service: 'Rexi Robinhood Backend API',
+    service: 'Bool Robinhood Backend API',
     network: sync.network,
     chainId: sync.chainId,
     launchpad: sync.launchpad,
@@ -66,7 +66,7 @@ let serverInstance = null;
 if (process.env.VERCEL !== '1') {
   serverInstance = app.listen(PORT, () => {
     const status = getSyncStatus();
-    console.log(`🚀 Rexi Backend running on http://localhost:${PORT}`);
+    console.log(`🚀 Bool Backend running on http://localhost:${PORT}`);
     console.log(`🌐 Active Network: ${status.network.toUpperCase()} (Chain ID ${status.chainId})`);
     console.log(`📍 Launchpad Address: ${status.launchpad || 'Not configured'}`);
     console.log(`📊 Health check available at http://localhost:${PORT}/api/health`);

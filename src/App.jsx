@@ -16,7 +16,7 @@ function ConnectErrorBanner() {
   return <div className="connect-error-banner">{connectError}</div>;
 }
 
-function Rexi() {
+function Bool() {
   const [page, setPage] = useState('Explore');
 
   const navigate = (target) => {
@@ -51,7 +51,7 @@ function Rexi() {
 export default function App() {
   return (
     <WalletProvider>
-      <Rexi />
+      <Bool />
     </WalletProvider>
   );
 }

@@ -1,8 +1,8 @@
-# Rexi — Robinhood Chain Token Launchpad
+# Bool — Robinhood Chain Token Launchpad
 
 > **Live in Production on Robinhood Chain Mainnet (`Chain ID: 4663`)**: [https://rexi-launchpad.vercel.app](https://rexi-launchpad.vercel.app)
 
-**Rexi** is a token launchpad purpose-built for Robinhood Chain. Creators launch ERC-20 tokens backed by real-world and crypto reward dividends (**Apple Stock $AAPL**, **Tesla Stock $TSLA**, **Wrapped Ether $WETH**, or **Global Dollar $USDG**). Holders continuously accrue rewards pro-rata to their holdings without locking or staking.
+**Bool** is a token launchpad purpose-built for Robinhood Chain. Creators launch ERC-20 tokens backed by real-world and crypto reward dividends (**Apple Stock $AAPL**, **Tesla Stock $TSLA**, **Wrapped Ether $WETH**, or **Global Dollar $USDG**). Holders continuously accrue rewards pro-rata to their holdings without locking or staking.
 
 ---
 
@@ -38,7 +38,7 @@
 Every reward deposit into `RexiLaunchpad.distribute()` splits automatically:
 * **67.5%** — Pro-rata dividend pool for token holders
 * **10.0%** — Desks Treasury
-* **10.0%** — Rexi Buyback Treasury
+* **10.0%** — Bool Buyback Treasury
 * **5.0%** — Protocol Treasury
 * **7.5%** — Platform Operations & Retained Buffer
 
