@@ -22,7 +22,7 @@
 }
 .hero-art { position: absolute; inset: 0; overflow: hidden; z-index: 0; pointer-events: none; }
 .hero-art-track { display: flex; width: 200%; height: 100%; will-change: transform; animation: hero-art-flow 40s linear infinite; }
-.hero-art-layer { flex: 0 0 50%; height: 100%; background: url('/brand/bool-spectrum.png') center top / cover no-repeat; }
+.hero-art-layer { flex: 0 0 50%; height: 100%; background: url('/brand/bool-spectrum.png') center top / 104% auto no-repeat; }
 .hero-banner::after { content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none; background: linear-gradient(90deg, rgba(8, 2, 14, .76) 0%, rgba(8, 2, 14, .48) 34%, rgba(25, 3, 35, .08) 66%, rgba(255, 42, 145, .12) 100%); }
 .hero-left { position: relative; z-index: 1; }
 
