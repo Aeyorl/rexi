@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { fetchChainIndex } from '../services/api';
-import { shortAddress, ACTIVE_NETWORK } from '../services/deployments';
+import { ACTIVE_NETWORK } from '../services/deployments';
 import './Explore.css';
 
 const FILTERS = ['Recent', 'Distributed', 'Claims'];
@@ -52,12 +52,6 @@ export default function Explore({ onNavigate }) {
   const safePage = Math.min(page, totalPages);
   const pagedChain = sortedChain.slice((safePage - 1) * ITEMS_PER_PAGE, safePage * ITEMS_PER_PAGE);
 
-  const activeNetworkName = chainIndex?.network === 'mainnet'
-    ? 'Robinhood Mainnet'
-    : (chainIndex?.network === 'testnet' ? 'Robinhood Testnet' : ACTIVE_NETWORK.chainName);
-  const activeChainId = chainIndex?.chainId || ACTIVE_NETWORK.chainIdDecimal;
-  const activeChainHex = `0x${activeChainId.toString(16)}`;
-
   return (
     <div className="explore">
       {/* Hero Banner */}
@@ -88,27 +82,6 @@ export default function Explore({ onNavigate }) {
               <span className="hero-stat-val">{chainStats?.holderPayouts ?? '—'}</span>
               <span className="hero-stat-label">Holder payouts</span>
             </div>
-          </div>
-        </div>
-        <div className="hero-right">
-          <div className="hero-price-ticker">
-            <span className="ticker-label">NETWORK</span>
-          </div>
-          <div className="hero-price">{activeNetworkName}</div>
-          <div className="hero-change positive">
-            Chain ID {activeChainId} ({activeChainHex})
-          </div>
-          <div className="hero-chart">
-            {chainIndex?.launchpad && (
-              <a
-                href={chainIndex.launchpadUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="hero-chain-badge"
-              >
-                Launchpad: {shortAddress(chainIndex.launchpad, 4)} ↗
-              </a>
-            )}
           </div>
         </div>
       </div>
