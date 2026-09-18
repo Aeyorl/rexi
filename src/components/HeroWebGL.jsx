@@ -5,28 +5,52 @@ const fragment = `precision highp float;
 uniform float uTime; uniform vec2 uResolution; uniform vec2 uMouse;
 float hash(vec2 p){ return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453); }
 float noise(vec2 p){ vec2 i=floor(p), f=fract(p); f=f*f*(3.0-2.0*f); return mix(mix(hash(i),hash(i+vec2(1.,0.)),f.x),mix(hash(i+vec2(0.,1.)),hash(i+vec2(1.,1.)),f.x),f.y); }
-float ribbon(vec2 p,float offset,float width,float speed,float bend){
-  float drift=sin(p.y*2.1+uTime*speed+offset)*bend+sin(p.y*5.0-uTime*speed*.7)*.012;
-  float line=abs(p.x-(p.y*.58+offset+drift));
-  return smoothstep(width,0.0,line)*smoothstep(-.3,1.0,p.y)*smoothstep(1.25,-.15,p.y);
+float curveX(vec2 p,float offset,float bend,float phase){
+  float t=uTime*.035;
+  return p.y*.64+offset+sin(p.y*1.55+phase+t)*bend+sin(p.y*3.1-phase-t*.7)*.035;
+}
+float band(vec2 p,float offset,float width,float bend,float phase){
+  float d=abs(p.x-curveX(p,offset,bend,phase));
+  return 1.0-smoothstep(width,width+.055,d);
 }
 void main(){
-  vec2 uv=gl_FragCoord.xy/uResolution; vec2 p=uv-.5; p.x*=uResolution.x/uResolution.y;
-  p.x+=uMouse.x*.012; p.y+=uMouse.y*.008;
-  vec3 col=vec3(.024,.005,.036);
-  float glow=exp(-length((uv-vec2(.86,.98))*vec2(1.0,1.55))*2.7);
-  col+=vec3(.68,.018,.34)*glow*.72;
-  col+=vec3(.18,.018,.30)*noise(uv*3.2+uTime*.025)*.18;
-  float r1=ribbon(p,-.48,.14,.18,.055), r2=ribbon(p,-.12,.085,.12,.045), r3=ribbon(p,.25,.115,.10,.035);
-  float edge1=smoothstep(.105,.0,abs(p.x-(p.y*.58-.48+sin(p.y*2.1+uTime*.18-.48)*.055)));
-  float edge2=smoothstep(.08,.0,abs(p.x-(p.y*.58-.12+sin(p.y*5.0-uTime*.12)*.045)));
-  vec3 glass=vec3(.58,.22,.86)*r1+vec3(1.0,.30,.58)*r2+vec3(.20,.40,1.0)*r3;
-  col+=glass*.72;
-  col+=vec3(1.0,.56,.72)*pow(r1,2.5)*.30;
-  col+=vec3(.18,.46,1.0)*pow(edge1,3.0)*.28;
-  col+=vec3(.85,.28,.96)*pow(edge2,3.0)*.22;
-  col+=vec3(.28,.02,.36)*ribbon(p,-.70,.22,.07,.03)*.24;
-  float vignette=smoothstep(.9,.18,length(p)); col*=.72+.28*vignette;
+  vec2 uv=gl_FragCoord.xy/uResolution;
+  vec2 p=uv-.5; p.x*=uResolution.x/uResolution.y;
+  p.x+=uMouse.x*.025; p.y+=uMouse.y*.016;
+  float n=noise(uv*2.4+uTime*.012);
+  vec3 col=mix(vec3(.018,.004,.028),vec3(.105,.012,.145),smoothstep(.12,.85,uv.y));
+  col+=vec3(.30,.015,.22)*exp(-length((uv-vec2(.90,.88))*vec2(1.0,1.45))*2.15);
+  col+=vec3(.20,.025,.34)*exp(-length((uv-vec2(.63,.52))*vec2(1.2,1.1))*2.0);
+  col+=vec3(.07,.008,.12)*n;
+
+  float d1=abs(p.x-curveX(p,-.46,.12,.3));
+  float d2=abs(p.x-curveX(p,-.08,.095,1.8));
+  float d3=abs(p.x-curveX(p,.34,.075,3.1));
+  float d4=abs(p.x-curveX(p,-.78,.15,4.4));
+  float r1=band(p,-.46,.27,.12,.3);
+  float r2=band(p,-.08,.17,.095,1.8);
+  float r3=band(p,.34,.22,.075,3.1);
+  float r4=band(p,-.78,.34,.15,4.4);
+
+  vec3 c1=mix(vec3(.25,.08,.38),vec3(1.0,.22,.50),smoothstep(-.35,.45,uv.y));
+  vec3 c2=mix(vec3(.20,.22,.60),vec3(.75,.20,.72),uv.x);
+  vec3 c3=mix(vec3(.12,.24,.58),vec3(.82,.16,.48),uv.y);
+  float edge1=exp(-d1*.0)*0.0 + smoothstep(.27,.12,d1)-smoothstep(.12,.025,d1);
+  float edge2=smoothstep(.17,.07,d2)-smoothstep(.07,.018,d2);
+  float edge3=smoothstep(.22,.09,d3)-smoothstep(.09,.02,d3);
+  float inner1=smoothstep(.24,.03,d1)*(0.72+.28*sin(uv.y*7.0+uTime*.12));
+  float inner2=smoothstep(.14,.025,d2)*(0.72+.28*sin(uv.x*6.0-uTime*.1));
+  float inner3=smoothstep(.19,.03,d3);
+
+  col=mix(col,col+c1*.42,r4*.42);
+  col=mix(col,col+c1*.72,r1*.68);
+  col=mix(col,col+c2*.62,r2*.64);
+  col=mix(col,col+c3*.58,r3*.60);
+  col+=vec3(1.0,.50,.70)*edge1*.34+vec3(.28,.45,1.0)*edge1*.20;
+  col+=vec3(1.0,.35,.65)*edge2*.30+vec3(.25,.48,1.0)*edge2*.22;
+  col+=vec3(.35,.50,1.0)*edge3*.35+vec3(1.0,.26,.62)*edge3*.14;
+  col+=vec3(.52,.18,.75)*inner1*.10+vec3(.22,.35,.95)*inner2*.12+vec3(1.0,.18,.52)*inner3*.08;
+  col*=.82+.18*smoothstep(.92,.15,length(p));
   gl_FragColor=vec4(col,1.0);
 }`;
 
