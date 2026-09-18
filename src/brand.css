@@ -1,0 +1,27 @@
+/* Bool's supplied spectrum artwork and violet identity. */
+body { background: radial-gradient(ellipse at 90% 0%, #32103980, transparent 48%), var(--bg-primary); }
+.bool-logo { display:block; width:126px; height:40px; object-fit:contain; filter:invert(1); mix-blend-mode:screen; }
+.navbar { background:rgba(12,7,16,.94); }
+.navbar-inner { height:72px; gap:22px; }
+.nav-link.active { background:var(--accent-dim); color:#dccbff; }
+.btn-connect.rh-connect-btn { color:#e4d5ff; border-color:#8953e9; background:#251637; padding:10px 18px; }
+.rh-btn-icon { display:none; }
+.explore { padding-top:28px; }
+.hero-banner { position:relative; overflow:hidden; min-height:410px; padding:48px; border-color:#603369; background:linear-gradient(90deg,rgba(12,4,14,.94),rgba(12,4,14,.65) 52%,rgba(12,4,14,.13)),url('/brand/bool-spectrum.png') center 20% / cover; }
+.hero-left { max-width:620px; position:relative; z-index:1; }
+.hero-title { font-size:clamp(32px,4vw,52px); letter-spacing:-.045em; line-height:1.08; max-width:590px; }
+.hero-subtitle { max-width:470px; color:#d4c3dd; margin-top:18px; margin-bottom:26px; }
+.hero-right { position:relative; border-left:0; align-self:flex-end; background:rgba(19,7,26,.78); border:1px solid #9c6bbb66; border-radius:14px; padding:20px; max-width:300px; }
+.hero-price { font-size:19px; }
+.hero-change.positive { color:#eac7ff; }
+.hero-stat-label { color:#c6afcf; }
+.hero-stats { border-top:1px solid #e2b4fa30; padding-top:22px; }
+.btn-primary { background:#ad87ff; color:#180b29; box-shadow:0 4px 22px #a35bff30; }
+.btn-primary:hover { box-shadow:0 4px 24px #c177ff50; }
+.btn-ghost { background:#16091f99; }
+.footer { background:#0e0813; border-top:1px solid var(--border); }
+.footer-logo { width:fit-content; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline:2px solid #efb6ff; outline-offset:4px; }
+@media(max-width:1000px) { .hero-banner { flex-direction:column; align-items:flex-start; gap:25px; } .hero-right { align-self:flex-start; max-width:100%; } .navbar-inner { gap:8px; } .nav-link { padding:6px 8px; } }
+@media(max-width:768px) { .navbar-links { top:72px; } .hero-banner { padding:28px 22px; background-position:center,right top; } .bool-logo { width:106px; height:34px; } .hero-title { font-size:36px; } .hero-stats { gap:20px; } .btn-connect.rh-connect-btn { padding:9px 12px; } }
+@media(prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none!important; transition:none!important; scroll-behavior:auto!important; } }

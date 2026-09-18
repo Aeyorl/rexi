@@ -47,7 +47,7 @@
 }
 
 .btn-primary {
-  background: var(--accent, #00c805);
+  background: var(--accent, #a37aff);
   color: #000;
   font-size: 13px;
   font-weight: 700;
@@ -59,12 +59,12 @@
   align-items: center;
   gap: 6px;
   transition: all 0.2s;
-  box-shadow: 0 2px 10px rgba(0, 200, 5, 0.2);
+  box-shadow: 0 2px 10px rgba(163, 122, 255, 0.2);
 }
 .btn-primary:hover {
   transform: translateY(-1px);
   filter: brightness(1.1);
-  box-shadow: 0 4px 16px rgba(0, 200, 5, 0.35);
+  box-shadow: 0 4px 16px rgba(163, 122, 255, 0.35);
 }
 .plus { font-size: 16px; line-height: 1; }
 
@@ -134,7 +134,7 @@
   font-weight: 600;
 }
 .hero-change.positive {
-  color: var(--green, #00c805);
+  color: var(--green, #a37aff);
 }
 
 .hero-chain-badge {
@@ -151,8 +151,8 @@
   transition: all 0.2s;
 }
 .hero-chain-badge:hover {
-  color: var(--accent, #00c805);
-  border-color: var(--accent, #00c805);
+  color: var(--accent, #a37aff);
+  border-color: var(--accent, #a37aff);
 }
 
 /* Catalog Header & Controls */
@@ -207,7 +207,7 @@
   transition: border-color 0.2s;
 }
 .search-input::placeholder { color: var(--text-muted); }
-.search-input:focus { border-color: var(--accent, #00c805); }
+.search-input:focus { border-color: var(--accent, #a37aff); }
 
 .filter-group {
   display: flex;
@@ -266,7 +266,7 @@
   transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s;
 }
 .token-card:hover {
-  border-color: var(--accent, #00c805);
+  border-color: var(--accent, #a37aff);
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
 }
@@ -324,9 +324,9 @@
   text-transform: uppercase;
 }
 .token-badge.live {
-  background: rgba(0, 200, 5, 0.12);
-  color: var(--accent, #00c805);
-  border: 1px solid rgba(0, 200, 5, 0.3);
+  background: rgba(163, 122, 255, 0.12);
+  color: var(--accent, #a37aff);
+  border: 1px solid rgba(163, 122, 255, 0.3);
 }
 .token-badge.closed {
   background: var(--bg-elevated);
@@ -353,8 +353,8 @@
   transition: all 0.15s;
 }
 .token-ext-link:hover {
-  color: var(--accent, #00c805);
-  border-color: var(--accent, #00c805);
+  color: var(--accent, #a37aff);
+  border-color: var(--accent, #a37aff);
 }
 
 .token-metrics {
@@ -383,7 +383,7 @@
   font-weight: 600;
 }
 .metric-val.accent {
-  color: var(--accent, #00c805);
+  color: var(--accent, #a37aff);
 }
 
 .token-card-footer {
@@ -429,9 +429,9 @@
   transition: all 0.15s;
 }
 .btn-card-action:hover {
-  background: rgba(0, 200, 5, 0.1);
-  color: var(--accent, #00c805);
-  border-color: var(--accent, #00c805);
+  background: rgba(163, 122, 255, 0.1);
+  color: var(--accent, #a37aff);
+  border-color: var(--accent, #a37aff);
 }
 
 /* Pagination */

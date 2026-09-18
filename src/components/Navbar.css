@@ -30,7 +30,7 @@
   margin-right: 4px;
   transition: color 0.2s;
 }
-.navbar-logo:hover { color: #00c805; }
+.navbar-logo:hover { color: #a37aff; }
 
 .logo-icon {
   display: flex;
@@ -80,9 +80,9 @@
 
 /* Robinhood Connect Button */
 .btn-connect.rh-connect-btn {
-  background: rgba(0, 200, 5, 0.1);
-  border: 1px solid rgba(0, 200, 5, 0.4);
-  color: #00c805;
+  background: rgba(163, 122, 255, 0.1);
+  border: 1px solid rgba(163, 122, 255, 0.4);
+  color: #a37aff;
   font-size: 13px;
   font-weight: 600;
   padding: 6px 14px;
@@ -95,10 +95,10 @@
   gap: 6px;
 }
 .btn-connect.rh-connect-btn:hover {
-  background: #00c805;
+  background: #a37aff;
   color: #000;
-  box-shadow: 0 0 16px rgba(0, 200, 5, 0.4);
-  border-color: #00c805;
+  box-shadow: 0 0 16px rgba(163, 122, 255, 0.4);
+  border-color: #a37aff;
 }
 
 .rh-btn-icon {
@@ -116,7 +116,7 @@
   align-items: center;
   gap: 8px;
   background: #141720;
-  border: 1px solid rgba(0, 200, 5, 0.3);
+  border: 1px solid rgba(163, 122, 255, 0.3);
   border-radius: 999px;
   padding: 5px 12px;
   color: var(--text-primary);
@@ -127,8 +127,8 @@
 .wallet-pill.rh-pill:hover,
 .wallet-pill.rh-pill.active {
   background: #1b1f2b;
-  border-color: #00c805;
-  box-shadow: 0 0 12px rgba(0, 200, 5, 0.2);
+  border-color: #a37aff;
+  box-shadow: 0 0 12px rgba(163, 122, 255, 0.2);
 }
 
 .rh-feather-badge {
@@ -138,7 +138,7 @@
 
 .rh-buying-power {
   font-weight: 700;
-  color: #00c805;
+  color: #a37aff;
 }
 
 .wallet-pill-addr {
@@ -165,10 +165,10 @@
   right: 0;
   width: 320px;
   background: #11141c;
-  border: 1px solid rgba(0, 200, 5, 0.3);
+  border: 1px solid rgba(163, 122, 255, 0.3);
   border-radius: var(--radius-lg);
   padding: 16px;
-  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.6), 0 0 24px rgba(0, 200, 5, 0.1);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.6), 0 0 24px rgba(163, 122, 255, 0.1);
   z-index: 200;
 }
 
@@ -191,8 +191,8 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #00c805;
-  box-shadow: 0 0 6px #00c805;
+  background: #a37aff;
+  box-shadow: 0 0 6px #a37aff;
 }
 
 .dropdown-wallet-name {
@@ -204,8 +204,8 @@
 .dropdown-net-tag.rh-tag {
   font-size: 10px;
   font-weight: 600;
-  color: #00c805;
-  background: rgba(0, 200, 5, 0.15);
+  color: #a37aff;
+  background: rgba(163, 122, 255, 0.15);
   padding: 1px 6px;
   border-radius: 4px;
 }
@@ -248,7 +248,7 @@
   color: var(--text-primary);
 }
 .rh-bal-num.green {
-  color: #00c805;
+  color: #a37aff;
 }
 
 /* Holdings Preview */
@@ -286,7 +286,7 @@
 }
 .rh-holding-item:hover {
   background: #1f2330;
-  border-color: #00c805;
+  border-color: #a37aff;
 }
 
 .h-left {
@@ -313,7 +313,7 @@
 .h-shares {
   font-size: 12px;
   font-weight: 600;
-  color: #00c805;
+  color: #a37aff;
 }
 .h-val {
   font-size: 10px;
@@ -330,9 +330,9 @@
 }
 
 .btn-rh-deposit {
-  background: rgba(0, 200, 5, 0.12);
-  border: 1px solid rgba(0, 200, 5, 0.3);
-  color: #00c805;
+  background: rgba(163, 122, 255, 0.12);
+  border: 1px solid rgba(163, 122, 255, 0.3);
+  color: #a37aff;
   font-size: 12px;
   font-weight: 600;
   padding: 8px;
@@ -341,7 +341,7 @@
   transition: all 0.15s;
 }
 .btn-rh-deposit:hover {
-  background: #00c805;
+  background: #a37aff;
   color: #000;
 }
 
@@ -360,7 +360,7 @@
   outline: none;
 }
 .btn-confirm-dep {
-  background: #00c805;
+  background: #a37aff;
   color: #000;
   font-weight: 600;
   font-size: 12px;
@@ -387,7 +387,7 @@
 .btn-quick-trade {
   background: none;
   border: none;
-  color: #00c805;
+  color: #a37aff;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;

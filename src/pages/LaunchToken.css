@@ -22,7 +22,7 @@
 .reward-asset-btn:hover { border-color: var(--accent); }
 .reward-asset-btn.active {
   border-color: var(--accent);
-  background: rgba(143, 179, 57, 0.08);
+  background: rgba(163, 122, 255, 0.08);
 }
 
 .reward-asset-symbol {

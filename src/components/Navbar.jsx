@@ -38,17 +38,7 @@ export default function Navbar({ activePage, onNavigate }) {
       <div className="navbar-inner">
         {/* Logo */}
         <button className="navbar-logo" onClick={() => onNavigate('Explore')}>
-          <div className="logo-icon">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <rect x="1" y="1" width="18" height="18" rx="3" stroke="currentColor" strokeWidth="1.5" fill="none"/>
-              <rect x="3" y="3" width="14" height="10" rx="1" fill="currentColor" opacity="0.2"/>
-              <rect x="3" y="3" width="14" height="10" rx="1" stroke="currentColor" strokeWidth="1" fill="none"/>
-              <rect x="5" y="5" width="10" height="6" fill="currentColor" opacity="0.5"/>
-              <rect x="6" y="14" width="8" height="1.5" rx="0.75" fill="currentColor"/>
-              <rect x="4" y="16.5" width="12" height="1" rx="0.5" fill="currentColor" opacity="0.5"/>
-            </svg>
-          </div>
-          <span className="logo-brand">Bool</span>
+          <img className="bool-logo" src="/brand/bool-logo.svg" alt="Bool" width="126" height="40" />
         </button>
 
         {/* Links */}
@@ -59,7 +49,7 @@ export default function Navbar({ activePage, onNavigate }) {
               className={`nav-link ${activePage === item ? 'active' : ''}`}
               onClick={() => { onNavigate(item); setMenuOpen(false); }}
             >
-              {item === 'Analytics' ? 'Analy' : item}
+              {item}
             </button>
           ))}
         </div>

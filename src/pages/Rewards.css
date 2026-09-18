@@ -118,7 +118,7 @@
 }
 
 .btn-claim-rewards {
-  background: linear-gradient(135deg, #8fb339 0%, #7aa02e 100%);
+  background: linear-gradient(135deg, #a37aff 0%, #8354dc 100%);
   color: #0d1008;
   font-size: 13px;
   font-weight: 600;
@@ -126,12 +126,12 @@
   border-radius: 999px;
   border: none;
   cursor: pointer;
-  box-shadow: 0 0 16px rgba(143, 179, 57, 0.3);
+  box-shadow: 0 0 16px rgba(163, 122, 255, 0.3);
   transition: all 0.2s;
 }
 .btn-claim-rewards:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 0 24px rgba(143, 179, 57, 0.5);
+  box-shadow: 0 0 24px rgba(163, 122, 255, 0.5);
 }
 .btn-claim-rewards:disabled {
   opacity: 0.7;
@@ -317,7 +317,7 @@
   transition: all 0.2s;
   white-space: nowrap;
 }
-.btn-ghost-refresh:hover:not(:disabled) { background: rgba(143, 179, 57, 0.12); }
+.btn-ghost-refresh:hover:not(:disabled) { background: rgba(163, 122, 255, 0.12); }
 .btn-ghost-refresh:disabled { opacity: 0.6; cursor: wait; }
 
 .card-actions {
@@ -360,7 +360,7 @@
 .launch-row:last-child { border-bottom: none; }
 .launch-row:hover { background: var(--bg-card-hover); }
 .launch-row.active {
-  background: rgba(143, 179, 57, 0.08);
+  background: rgba(163, 122, 255, 0.08);
   box-shadow: inset 2px 0 0 var(--accent);
 }
 
