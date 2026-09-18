@@ -1,27 +1,22 @@
-/* Bool's supplied spectrum artwork and violet identity. */
-body { background: radial-gradient(ellipse at 90% 0%, #32103980, transparent 48%), var(--bg-primary); }
-.bool-logo { display:block; width:126px; height:40px; object-fit:contain; filter:invert(1); mix-blend-mode:screen; }
-.navbar { background:rgba(12,7,16,.94); }
-.navbar-inner { height:72px; gap:22px; }
-.nav-link.active { background:var(--accent-dim); color:#dccbff; }
-.btn-connect.rh-connect-btn { color:#e4d5ff; border-color:#8953e9; background:#251637; padding:10px 18px; }
+/* Bool workspace theme: warm paper, utility chrome, and editorial cards. */
+body { background-color:var(--bg-primary); }
+.bool-logo { display:block; width:126px; height:40px; object-fit:contain; filter:none; mix-blend-mode:multiply; }
+.navbar { background:rgba(242,237,223,.94); border-bottom:1px solid var(--border); box-shadow:0 1px 0 rgba(255,255,255,.65); }
+.navbar-inner { height:52px; gap:18px; }
+.nav-link:hover,.nav-link.active { background:#e4dcc8; color:var(--text-primary); }
+.btn-connect.rh-connect-btn { color:var(--text-primary); border-color:#9c8e72; background:#f8f4e9; padding:8px 14px; box-shadow:1px 1px 0 #9c8e72; }
+.btn-connect.rh-connect-btn:hover { color:var(--text-primary); background:#e8dfcc; }
 .rh-btn-icon { display:none; }
 .explore { padding-top:28px; }
-.hero-banner { position:relative; overflow:hidden; min-height:410px; padding:48px; border-color:#603369; background:linear-gradient(90deg,rgba(12,4,14,.94),rgba(12,4,14,.65) 52%,rgba(12,4,14,.13)),url('/brand/bool-spectrum.png') center 20% / cover; }
-.hero-left { max-width:620px; position:relative; z-index:1; }
-.hero-title { font-size:clamp(32px,4vw,52px); letter-spacing:-.045em; line-height:1.08; max-width:590px; }
-.hero-subtitle { max-width:470px; color:#d4c3dd; margin-top:18px; margin-bottom:26px; }
-.hero-right { position:relative; border-left:0; align-self:flex-end; background:rgba(19,7,26,.78); border:1px solid #9c6bbb66; border-radius:14px; padding:20px; max-width:300px; }
-.hero-price { font-size:19px; }
-.hero-change.positive { color:#eac7ff; }
-.hero-stat-label { color:#c6afcf; }
-.hero-stats { border-top:1px solid #e2b4fa30; padding-top:22px; }
-.btn-primary { background:#ad87ff; color:#180b29; box-shadow:0 4px 22px #a35bff30; }
-.btn-primary:hover { box-shadow:0 4px 24px #c177ff50; }
-.btn-ghost { background:#16091f99; }
-.footer { background:#0e0813; border-top:1px solid var(--border); }
-.footer-logo { width:fit-content; }
-button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline:2px solid #efb6ff; outline-offset:4px; }
+.hero-banner { min-height:410px; padding:48px; border-color:#9e947d; background:linear-gradient(90deg,rgba(242,237,223,.96) 0%,rgba(242,237,223,.90) 42%,rgba(242,237,223,.22) 100%),url('/brand/bool-spectrum.png') center 20% / cover; box-shadow:var(--shadow); }
+.hero-title { color:#fffaf1; letter-spacing:-.055em; line-height:1.03; text-shadow:0 1px 18px rgba(0,0,0,.35); }
+.hero-subtitle { color:#eee3df; }
+.btn-primary { background:#e16445; color:#fffaf1; box-shadow:2px 2px 0 #a84832; }
+.btn-primary:hover { background:#c95136; box-shadow:3px 3px 0 #913a2b; }
+.btn-ghost { background:#f8f3e8; border-color:#9e947d; color:#38362e; box-shadow:1px 1px 0 #9e947d; }
+.hero-stat-label { color:#d8c8cb; }
+.hero-stats { border-top-color:#968b753d; }
+.footer { background:#e8e0ce; border-top:1px solid var(--border); color:var(--text-secondary); }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline:2px solid #e16445; outline-offset:4px; }
 @media(max-width:1000px) { .hero-banner { flex-direction:column; align-items:flex-start; gap:25px; } .hero-right { align-self:flex-start; max-width:100%; } .navbar-inner { gap:8px; } .nav-link { padding:6px 8px; } }
-@media(max-width:768px) { .navbar-links { top:72px; } .hero-banner { padding:28px 22px; background-position:center,right top; } .bool-logo { width:106px; height:34px; } .hero-title { font-size:36px; } .hero-stats { gap:20px; } .btn-connect.rh-connect-btn { padding:9px 12px; } }
-@media(prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none!important; transition:none!important; scroll-behavior:auto!important; } }
+@media(max-width:768px) { .navbar-links { top:52px; } .hero-banner { padding:28px 22px; } .bool-logo { width:106px; height:34px; } .hero-title { font-size:36px; } .hero-stats { gap:20px; } .btn-connect.rh-connect-btn { padding:9px 12px; } }
