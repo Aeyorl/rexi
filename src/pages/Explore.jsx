@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { fetchChainIndex } from '../services/api';
-import { ACTIVE_NETWORK } from '../services/deployments';
+import { ACTIVE_NETWORK, shortAddress } from '../services/deployments';
 import './Explore.css';
 
 const FILTERS = ['Recent', 'Distributed', 'Claims'];
