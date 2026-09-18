@@ -33,7 +33,7 @@ export const ROBINHOOD_CHAIN_TESTNET = {
   blockExplorerUrls: REXI_NETWORK.blockExplorerUrls
 };
 
-/** Active RexiLaunchpad contract address. */
+/** Active Bool launchpad contract address. */
 export const ACTIVE_LAUNCHPAD_ADDRESS = ACTIVE_LAUNCHPAD;
 export const REXI_LAUNCHPAD_TESTNET = REXI_LAUNCHPAD;
 

@@ -1,5 +1,5 @@
 /**
- * Canonical Rexi deployments.
+ * Canonical Bool deployments.
  *
  * Single source of truth for every address the app, the API routes and the
  * deployment scripts read. If a contract is redeployed, change it here only.
@@ -23,7 +23,7 @@ export const REXI_NETWORK = {
   blockExplorerUrls: ['https://explorer.testnet.chain.robinhood.com']
 };
 
-/** Current RexiLaunchpad. Matches contracts/RexiLaunchpad.sol at HEAD (post security review). */
+/** Current Bool launchpad. Matches the deployed launchpad at HEAD (post security review). */
 export const REXI_LAUNCHPAD = '0xabaAd57e9Dbb401356c0b03d724c2714056e7dA0';
 
 /** Reward assets a launch can pay out with. Testnet stand-ins only. */
@@ -31,7 +31,7 @@ export const REXI_REWARD_ASSETS = [
   {
     address: '0x741Dd50A3D166589e870615c9B2D482DA800a0C3',
     symbol: 'rAAPL',
-    name: 'Rexi Test Apple Stock Token',
+    name: 'Bool Test Apple Stock Token',
     decimals: 18,
     testnetOnly: true,
     mintable: true
@@ -174,7 +174,7 @@ export const ACTIVE_REWARD_ASSET = ACTIVE_REWARD_ASSETS[0]?.address || '';
 export const REXI_GENESIS_LAUNCHES = [
   {
     token: '0x6ec53eb68b8f6b528cb8801af1001794d3e934e8',
-    name: 'Rexi Genesis',
+    name: 'Bool Genesis',
     symbol: 'RXG',
     supply: '1000000000000000000000000',
     rewardAsset: REXI_REWARD_ASSET,

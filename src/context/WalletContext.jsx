@@ -1,4 +1,4 @@
-// Rexi wallet state: a real EVM wallet on Robinhood Chain — nothing simulated.
+// Bool wallet state: a real EVM wallet on Robinhood Chain — nothing simulated.
 //
 // There is no connect modal: `connect()` talks to the injected wallet directly
 // and the outcome is reflected in `connectStatus` / `connectError` so the UI can

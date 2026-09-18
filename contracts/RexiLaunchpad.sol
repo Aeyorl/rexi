@@ -207,7 +207,7 @@ contract RexiLaunchpad is ITransferHook {
 
 /// @notice Testnet-only reward asset. Do not use on mainnet.
 contract RexiTestStockToken is RexiToken {
-    constructor() RexiToken('Rexi Test Apple Stock Token', 'rAAPL', msg.sender, 0) {}
+    constructor() RexiToken('Bool Test Apple Stock Token', 'rAAPL', msg.sender, 0) {}
 
     function mint(address to, uint256 amount) external {
         balanceOf[to] += amount;

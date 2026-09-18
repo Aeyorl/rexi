@@ -1,4 +1,4 @@
-// Rexi navbar: page links plus the real wallet state. The old
+// Bool navbar: page links plus the real wallet state. The old
 // buying-power/holdings/deposit dropdown was simulated brokerage data,
 // so it is gone — the pill shows the connected address and links out to
 // the chain explorer.

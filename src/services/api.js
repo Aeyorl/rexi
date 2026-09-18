@@ -1,5 +1,5 @@
 /**
- * Rexi frontend API client.
+ * Bool frontend API client.
  *
  * The only backend surface is the real on-chain index
  * (server/routes/chain.mjs). No simulated data lives here.

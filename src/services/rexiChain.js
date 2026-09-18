@@ -76,7 +76,7 @@ async function waitForReceipt(hash) {
  * ------------------------------------------------------------------ */
 
 /**
- * Deploys a launch token through RexiLaunchpad.createLaunch and resolves the
+ * Deploys a launch token through the Bool launchpad and resolves the
  * address of the token that was created from the LaunchCreated event.
  */
 export async function createRexiLaunch({ name, symbol, rewardAsset = ACTIVE_REWARD_ASSET, supply = 1000000, launchpad = ACTIVE_LAUNCHPAD }) {
