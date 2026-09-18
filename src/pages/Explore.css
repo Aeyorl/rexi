@@ -6,6 +6,9 @@
 
 /* Hero Banner */
 .hero-banner {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   background: linear-gradient(135deg, #13171e 0%, #17211a 100%);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg, 12px);
@@ -17,6 +20,9 @@
   gap: 32px;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
 }
+.hero-webgl { position: absolute; inset: 0; width: 100%; height: 100%; display: block; z-index: 0; pointer-events: none; }
+.hero-banner::after { content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none; background: radial-gradient(circle at 92% 8%, rgba(255, 42, 145, .12), transparent 42%), linear-gradient(120deg, rgba(11, 3, 16, .32), transparent 60%); }
+.hero-left { position: relative; z-index: 1; }
 
 .hero-left {
   flex: 1;

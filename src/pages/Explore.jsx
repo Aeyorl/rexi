@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { fetchChainIndex } from '../services/api';
 import { ACTIVE_NETWORK, shortAddress } from '../services/deployments';
 import './Explore.css';
+import HeroWebGL from '../components/HeroWebGL';
 
 const FILTERS = ['Recent', 'Distributed', 'Claims'];
 
@@ -56,6 +57,7 @@ export default function Explore({ onNavigate }) {
     <div className="explore">
       {/* Hero Banner */}
       <div className="hero-banner">
+        <HeroWebGL />
         <div className="hero-left">
           <h1 className="hero-title">Launch tokens that reward stocks.</h1>
           <p className="hero-subtitle">
